@@ -1,1618 +1,495 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>布丁狗回转甜品店 V4.0 | 稳定手势·订单挑战增强版 🍮🐶</title>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>布丁狗回转寿司 V11 | 无摄像头窗口·轻松投喂模式</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <style>
+    :root{
+      --brown:#5a3d28; --cream:#fff7df; --cream2:#fffcf0; --yellow:#fce67c;
+      --red:#ff6b6b; --orange:#ffae42; --green:#73d97d; --blue:#8bd3ff; --pink:#ffc7d7;
+      --shadow:0 7px 0 var(--brown); --softShadow:0 14px 30px rgba(90,61,40,.18);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(circle at 30% 10%,#fff7c9 0,#fffcf0 42%,#ffe6b7 100%);overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif;user-select:none;color:var(--brown)}
+    button,input,select{font-family:inherit}
 
-    <style>
-        :root {
-            --brown: #5a3d28;
-            --cream: #fffcf0;
-            --milk: #fff7dc;
-            --yellow: #fce67c;
-            --orange: #ffb34d;
-            --red: #ff6b6b;
-            --green: #77dd77;
-            --blue: #7cc9ff;
-            --shadow: 0 6px 0 var(--brown);
-        }
+    /* ---------- common ---------- */
+    .pill{border:3px solid var(--brown);border-radius:999px;background:#fff;box-shadow:0 5px 0 var(--brown);font-weight:900;color:var(--brown)}
+    .hidden{display:none!important}.soft-hide{visibility:hidden!important}
 
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            background: radial-gradient(circle at 50% 10%, #fff9d6 0%, #fffcf0 42%, #f6e5c5 100%);
-            overflow: hidden;
-            font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-            user-select: none;
-            color: var(--brown);
-        }
+    /* ---------- start menu ---------- */
+    #start-menu{position:fixed;inset:0;z-index:300;background:rgba(255,252,240,.97);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:24px;transition:.35s ease}
+    .menu-card{width:min(1060px,96vw);min-height:650px;background:linear-gradient(180deg,#fff 0%,#fff7df 100%);border:6px solid var(--brown);border-radius:36px;box-shadow:0 14px 0 var(--brown),0 26px 70px rgba(90,61,40,.22);padding:30px;position:relative;overflow:hidden}
+    .menu-card:before{content:"🍮 🍣 🍰 🍓 🍪 🥞";position:absolute;left:20px;right:20px;top:12px;font-size:34px;opacity:.12;letter-spacing:24px;white-space:nowrap}
+    .menu-title{text-align:center;font-size:48px;font-weight:1000;margin:10px 0 6px;letter-spacing:-1px}.menu-subtitle{text-align:center;font-size:17px;color:#9b7658;font-weight:800;margin-bottom:22px}
+    .menu-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:stretch}.how-card,.setting-card{background:#fff;border:4px solid var(--brown);border-radius:28px;box-shadow:var(--shadow);padding:22px}.section-title{font-weight:1000;font-size:22px;margin-bottom:12px}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.step{background:#fff9e8;border:3px solid var(--brown);border-radius:22px;padding:16px;text-align:center;min-height:150px}.step .emoji{font-size:48px}.step b{display:block;font-size:18px;margin:7px 0}.step span{font-size:13px;color:#87674e;font-weight:700;line-height:1.45}
+    .mode-row,.assist-row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 18px}.time-btn,.assist-btn{padding:11px 16px;cursor:pointer;transition:.08s}.time-btn.active,.assist-btn.active{background:var(--yellow);transform:translateY(3px);box-shadow:0 2px 0 var(--brown)}
+    #start-game-btn{width:100%;margin-top:12px;padding:16px 20px;border:5px solid var(--brown);border-radius:999px;background:var(--red);color:white;font-size:28px;font-weight:1000;box-shadow:0 9px 0 var(--brown);cursor:pointer;transition:.08s}#start-game-btn:active{transform:translateY(5px);box-shadow:0 4px 0 var(--brown)}
+    .tips{font-size:13px;line-height:1.65;color:#7d5c45;font-weight:700;background:#fff5cb;border:3px dashed #d4a75a;border-radius:18px;padding:12px;margin-top:15px}
 
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            opacity: 0.22;
-            background-image:
-                radial-gradient(circle, rgba(90,61,40,0.18) 2px, transparent 2px),
-                radial-gradient(circle, rgba(255,179,77,0.18) 3px, transparent 3px);
-            background-size: 46px 46px, 82px 82px;
-            background-position: 0 0, 20px 18px;
-        }
+    /* ---------- HUD ---------- */
+    #game-ui{position:absolute;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:40;background:rgba(255,252,240,.86);border:3px solid rgba(90,61,40,.2);padding:7px 14px;border-radius:999px;backdrop-filter:blur(6px);visibility:hidden}.ui-card{background:#fff;border:3px solid var(--brown);border-radius:22px;box-shadow:0 4px 0 var(--brown);padding:5px 12px;text-align:center;min-width:72px}.ui-label{font-size:10px;font-weight:900;color:#a08068;letter-spacing:.4px}.ui-value{font-size:22px;font-weight:1000;line-height:1.08;color:var(--brown)}#mood-card .bar,#skill-card .bar{height:8px;width:82px;background:#f1e0bf;border:2px solid var(--brown);border-radius:8px;overflow:hidden;margin-top:3px}#mood-fill{height:100%;width:0;background:linear-gradient(90deg,#ffc7d7,#ff8fb2)}#skill-fill{height:100%;width:0;background:linear-gradient(90deg,#fce67c,#ffae42)}
 
-        #start-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(255, 252, 240, 0.96);
-            backdrop-filter: blur(10px);
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.5s ease;
-            padding: 24px;
-        }
+    #camera-wrapper{position:absolute;right:18px;top:18px;z-index:35;border:4px solid var(--brown);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);visibility:hidden;background:#fff}#webcam{width:172px;height:126px;object-fit:cover;transform:scaleX(-1);display:block}.cam-label{position:absolute;bottom:0;left:0;right:0;background:rgba(90,61,40,.86);color:#fff;font-size:12px;text-align:center;font-weight:900;padding:3px}
 
-        .menu-title {
-            font-size: clamp(34px, 4.5vw, 56px);
-            color: var(--brown);
-            font-weight: 900;
-            margin-bottom: 6px;
-            text-align: center;
-            letter-spacing: 1px;
-            text-shadow: 0 4px 0 rgba(255, 179, 77, 0.35);
-        }
+    #control-panel{position:absolute;top:18px;left:18px;z-index:42;width:230px;background:#fff;border:4px solid var(--brown);border-radius:22px;box-shadow:var(--shadow);padding:13px;visibility:hidden}.control-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}.control-group label{font-size:12px;font-weight:900;display:flex;justify-content:space-between}.control-group input[type="range"]{accent-color:var(--red)}.small-btn{border:3px solid var(--brown);border-radius:14px;background:#fff;padding:8px 10px;font-weight:1000;box-shadow:0 4px 0 var(--brown);cursor:pointer}.small-btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--brown)}
 
-        .menu-subtitle {
-            font-size: 16px;
-            color: #a08068;
-            margin-bottom: 22px;
-            font-weight: bold;
-            text-align: center;
-        }
+    #gesture-hud{position:absolute;left:18px;bottom:18px;z-index:48;display:flex;gap:10px;visibility:hidden}.hand-card{width:178px;background:#fff;border:4px solid var(--brown);border-radius:20px;box-shadow:var(--shadow);padding:10px}.hand-title{display:flex;justify-content:space-between;font-size:13px;font-weight:1000}.hand-state{margin-top:7px;font-size:13px;font-weight:900;color:#7a5942;min-height:34px}.power-wrap{height:12px;margin-top:8px;background:#f2ddba;border:2px solid var(--brown);border-radius:999px;overflow:hidden}.power-fill{height:100%;width:0;background:linear-gradient(90deg,#8bd3ff,#73d97d,#fce67c,#ffae42)}.stable-dots{font-size:14px;letter-spacing:1px;color:#d3b080;margin-top:5px}.stable-dots .on{color:#ff6b6b}
 
-        .tutorial-card {
-            width: min(760px, 92vw);
-            background: #ffffff;
-            border: 4px solid var(--brown);
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            padding: 18px 22px 20px;
-            margin-bottom: 26px;
-        }
+    /* ---------- game area ---------- */
+    #conveyor-belt{position:absolute;top:225px;left:0;width:100%;height:140px;z-index:8;visibility:hidden;background:linear-gradient(90deg,#f4dfbe,#fff2d4,#f4dfbe);border-top:7px solid var(--brown);border-bottom:7px solid var(--brown);box-shadow:inset 0 8px 20px rgba(90,61,40,.15)}#conveyor-belt:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(90,61,40,.06) 0 22px,rgba(255,255,255,.16) 22px 44px);animation:beltMove 1.5s linear infinite}@keyframes beltMove{to{background-position:-44px 0}}#belt-track{position:absolute;inset:0}.scrolling-food{position:absolute;width:78px;height:78px;border:3px solid var(--brown);border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:46px;box-shadow:0 6px 0 var(--brown);will-change:left,top;transition:transform .12s}.scrolling-food.orderGlow{box-shadow:0 6px 0 var(--brown),0 0 18px #ffcc33;transform:scale(1.06)}.scrolling-food.danger{background:#ffe5e5}.scrolling-food.bonus{background:#fff7be}
 
-        .tutorial-title {
-            font-weight: 900;
-            font-size: 20px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+    #pompompurin-container{position:absolute;bottom:2.5%;left:50%;transform:translateX(-50%);z-index:16;display:flex;flex-direction:column;align-items:center;visibility:hidden;will-change:left;transition:left .05s linear}.dog-stage{position:relative}#dog-img{width:270px;height:auto;display:block;mix-blend-mode:multiply;pointer-events:none}.mouth-target{position:absolute;left:50%;top:42%;width:94px;height:62px;border:4px dashed rgba(255,107,107,.75);border-radius:50%;transform:translate(-50%,-50%);opacity:0;transition:.15s;animation:targetPulse .9s infinite}.mouth-target.show{opacity:1}@keyframes targetPulse{50%{transform:translate(-50%,-50%) scale(1.08)}}#status-tag{margin-top:-12px;background:var(--brown);color:#fff;border-radius:999px;padding:7px 20px;font-size:14px;font-weight:1000;white-space:nowrap;box-shadow:0 4px 0 rgba(0,0,0,.16)}
 
-        .tutorial-steps {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-        }
+    .aiming-food-node{position:absolute;z-index:116;display:none;pointer-events:none;font-size:62px;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 16px rgba(0,0,0,.25));transition:filter .12s}.aiming-food-node.armed{filter:drop-shadow(0 0 14px #ffcd3c) drop-shadow(0 8px 16px rgba(0,0,0,.25));animation:foodArmed .45s infinite alternate}@keyframes foodArmed{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.12)}}.aim-line-svg{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:112;display:none;pointer-events:none;overflow:visible}.aim-line-svg *{vector-effect:non-scaling-stroke}.aim-path-line{fill:none;stroke:#ff5b6b;stroke-width:7;stroke-dasharray:12 10;stroke-linecap:round;opacity:.98;filter:drop-shadow(0 0 7px rgba(255,91,107,.45))}.aim-path-line.hit{stroke:#20c96b;stroke-width:8;filter:drop-shadow(0 0 10px rgba(32,201,107,.7))}.aim-force-line{stroke:#129cff;stroke-width:15;stroke-linecap:round;opacity:.96;filter:drop-shadow(0 0 12px rgba(18,156,255,.8))}.aim-force-line.armed{stroke:#ff9d00;filter:drop-shadow(0 0 14px rgba(255,157,0,.95))}.aim-safe-circle{fill:rgba(139,211,255,.08);stroke:#129cff;stroke-width:5;stroke-dasharray:10 8;opacity:.85}.aim-anchor-dot{fill:#fff7df;stroke:#5a3d28;stroke-width:6;filter:drop-shadow(0 4px 0 rgba(90,61,40,.22))}.aim-landing-dot{fill:rgba(255,255,255,.9);stroke:#ff5b6b;stroke-width:6;opacity:1;filter:drop-shadow(0 0 10px rgba(255,91,107,.65))}.aim-landing-dot.hit{stroke:#63d479;fill:rgba(230,255,229,.86)}.aim-label{position:absolute;z-index:108;display:none;pointer-events:none;background:#fff;border:3px solid var(--brown);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:1000;color:var(--brown);box-shadow:0 4px 0 var(--brown);white-space:nowrap;transform:translate(-50%,-150%)}.flying-food{position:absolute;z-index:94;font-size:58px;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 3px 8px rgba(0,0,0,.45));will-change:left,top}.hand-pointer{position:absolute;z-index:110;display:none;pointer-events:none;font-size:46px;transform:translate(-50%,-50%);text-shadow:2px 2px 0 #fff,0 0 12px #fff}.hand-pointer.cool{opacity:.4}.hand-pointer.ready{filter:drop-shadow(0 0 10px gold)}
 
-        .tutorial-step {
-            background: var(--milk);
-            border: 3px solid var(--brown);
-            border-radius: 18px;
-            padding: 14px;
-            text-align: center;
-            min-height: 108px;
-        }
+    #order-panel{position:absolute;right:20px;top:164px;z-index:45;width:220px;background:#fff;border:4px solid var(--brown);border-radius:24px;box-shadow:var(--shadow);padding:13px;visibility:hidden}.order-title{font-size:14px;font-weight:1000;color:#9b7658}.order-food{font-size:42px;text-align:center;line-height:1.15}.order-desc{text-align:center;font-size:13px;font-weight:900}.order-streak{font-size:12px;background:#fff5cb;border-radius:12px;padding:6px;margin-top:8px;font-weight:800;text-align:center}
+    #quest-panel{position:absolute;right:20px;bottom:18px;z-index:45;width:270px;background:#fff;border:4px solid var(--brown);border-radius:24px;box-shadow:var(--shadow);padding:13px;visibility:hidden}.quest-title{font-weight:1000;margin-bottom:8px}.quest-item{font-size:13px;line-height:1.45;font-weight:800;padding:6px 8px;border-radius:12px;background:#fff8e3;margin:5px 0;border:2px solid #ecd49d}.quest-item.done{background:#eaffde;color:#438a37;text-decoration:line-through}
 
-        .tutorial-icon { font-size: 34px; display: block; margin-bottom: 8px; }
-        .tutorial-text { font-size: 14px; line-height: 1.5; font-weight: 800; }
+    #event-banner{position:absolute;top:146px;left:50%;transform:translateX(-50%) translateY(-16px);z-index:80;opacity:0;pointer-events:none;background:linear-gradient(90deg,#5a3d28,#8c5b35);color:#fff;border:4px solid #fff;border-radius:999px;padding:10px 24px;font-size:18px;font-weight:1000;box-shadow:0 8px 25px rgba(0,0,0,.18);transition:.25s}#event-banner.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    #toast-layer{position:absolute;inset:0;pointer-events:none;z-index:150}.floating-text{position:absolute;font-size:32px;font-weight:1000;color:#ff6b6b;text-shadow:2px 2px 0 #fff;white-space:nowrap;transition:all .85s cubic-bezier(.2,1,.3,1)}.particle{position:absolute;z-index:92;pointer-events:none;font-size:26px;animation:flyUp .9s ease-out forwards}@keyframes flyUp{from{opacity:1;transform:translate(-50%,-50%) scale(.4)}to{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1.3)}}
 
-        .time-selector {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 32px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .time-btn {
-            background: #ffffff;
-            border: 3px solid var(--brown);
-            padding: 12px 24px;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--brown);
-            cursor: pointer;
-            box-shadow: 0 5px 0 var(--brown);
-            transition: all 0.1s ease;
-        }
-
-        .time-btn:hover { transform: translateY(2px); box-shadow: 0 3px 0 var(--brown); }
-        .time-btn.active { background: var(--yellow); transform: translateY(3px); box-shadow: 0 2px 0 var(--brown); }
-
-        #start-game-btn {
-            background: linear-gradient(180deg, #ff8585, #ff5c5c);
-            color: white;
-            border: 4px solid var(--brown);
-            padding: 16px 60px;
-            font-size: 28px;
-            font-weight: 900;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 8px 0 var(--brown);
-            transition: 0.12s ease;
-        }
-
-        #start-game-btn:hover { transform: translateY(3px); box-shadow: 0 5px 0 var(--brown); }
-        #start-game-btn:active { transform: translateY(7px); box-shadow: 0 1px 0 var(--brown); }
-
-        #control-panel {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            z-index: 100;
-            visibility: hidden;
-            background: #ffffff;
-            border: 4px solid var(--brown);
-            padding: 15px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 220px;
-        }
-
-        .control-group { display: flex; flex-direction: column; gap: 4px; }
-        .control-group label { font-size: 12px; color: var(--brown); font-weight: bold; display: flex; justify-content: space-between; }
-        .control-group input[type="range"] { accent-color: var(--red); cursor: pointer; }
-        .tiny-tip { font-size: 11px; color: #a08068; line-height: 1.35; }
-
-        #game-ui {
-            position: absolute;
-            top: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 12px;
-            z-index: 15;
-            visibility: hidden;
-            background: rgba(255,252,240,0.82);
-            padding: 6px 18px;
-            border-radius: 60px;
-            backdrop-filter: blur(2px);
-        }
-
-        .ui-card {
-            background: #ffffff;
-            border: 3px solid var(--brown);
-            padding: 5px 12px;
-            border-radius: 30px;
-            box-shadow: 0 4px 0 var(--brown);
-            text-align: center;
-            min-width: 78px;
-            transition: 0.18s ease;
-        }
-
-        .ui-label { font-size: 10px; color: #a08068; font-weight: bold; }
-        .ui-value { font-size: 22px; color: var(--brown); font-weight: 900; line-height: 1.2; }
-        .danger-countdown { background: #ffe1e1 !important; animation: timePulse 0.55s infinite alternate; }
-        .skill-ready { background: #fff0aa !important; animation: readyPulse 0.55s infinite alternate; }
-
-        #difficulty-tag {
-            position: absolute;
-            top: 102px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 16;
-            visibility: hidden;
-            background: rgba(90,61,40,0.92);
-            color: white;
-            border-radius: 30px;
-            padding: 7px 18px;
-            font-weight: 900;
-            font-size: 14px;
-            box-shadow: 0 4px 0 rgba(90,61,40,0.28);
-        }
-
-        #camera-wrapper {
-            position: absolute;
-            right: 25px;
-            top: 25px;
-            z-index: 10;
-            visibility: hidden;
-            border: 4px solid var(--brown);
-            border-radius: 20px;
-            overflow: hidden;
-            background: #fff;
-            box-shadow: var(--shadow);
-        }
-
-        #webcam {
-            width: 170px;
-            height: 125px;
-            object-fit: cover;
-            transform: scaleX(-1);
-            display: block;
-        }
-
-        #gesture-hud {
-            position: absolute;
-            right: 25px;
-            top: 174px;
-            z-index: 20;
-            visibility: hidden;
-            width: 270px;
-            background: #ffffff;
-            border: 4px solid var(--brown);
-            border-radius: 18px;
-            box-shadow: var(--shadow);
-            padding: 12px 14px;
-        }
-
-        #gesture-status {
-            font-size: 16px;
-            font-weight: 900;
-            line-height: 1.4;
-        }
-
-        #gesture-mini {
-            font-size: 12px;
-            color: #a08068;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
-        #gesture-hud.ok { background: #f2ffef; }
-        #gesture-hud.warn { background: #fff7d2; }
-        #gesture-hud.bad { background: #ffe8e8; }
-        #gesture-hud.skill { background: #fff1b8; }
-
-        #force-panel {
-            position: absolute;
-            z-index: 120;
-            display: none;
-            width: 180px;
-            transform: translate(-50%, -120%);
-            pointer-events: none;
-        }
-
-        #force-label {
-            background: rgba(90,61,40,0.92);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 6px;
-        }
-
-        #force-bar {
-            height: 18px;
-            background: #ffffff;
-            border: 3px solid var(--brown);
-            border-radius: 999px;
-            overflow: hidden;
-            box-shadow: 0 3px 0 var(--brown);
-        }
-
-        #force-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #7cc9ff, #fce67c, #ff6b6b);
-            border-radius: 999px;
-            transition: width 0.05s linear;
-        }
-
-        #pompompurin-container {
-            position: absolute;
-            bottom: 3%;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 5;
-            visibility: hidden;
-            will-change: left;
-            transition: left 0.05s linear;
-        }
-
-        #dog-img {
-            width: 260px;
-            height: auto;
-            display: block;
-            mix-blend-mode: multiply;
-            pointer-events: none;
-            filter: drop-shadow(0 12px 8px rgba(90,61,40,0.18));
-        }
-
-        #status-tag {
-            font-size: 14px;
-            font-weight: bold;
-            color: #ffffff;
-            margin-top: -10px;
-            background: var(--brown);
-            padding: 6px 22px;
-            border-radius: 30px;
-            white-space: nowrap;
-            box-shadow: 0 4px 0 rgba(90,61,40,0.25);
-        }
-
-        #conveyor-belt {
-            position: absolute;
-            top: 230px;
-            left: 0;
-            width: 100%;
-            height: 130px;
-            z-index: 6;
-            visibility: hidden;
-            background:
-                linear-gradient(90deg, rgba(255,255,255,0.2) 0 12px, transparent 12px 34px),
-                #f7ebd3;
-            border-top: 6px solid var(--brown);
-            border-bottom: 6px solid var(--brown);
-            box-shadow: inset 0 8px 16px rgba(90,61,40,0.15);
-        }
-
-        #belt-track { position: absolute; left: 0; top: 0; height: 100%; width: 100%; }
-
-        .scrolling-food {
-            position: absolute;
-            font-size: 45px;
-            cursor: pointer;
-            width: 75px;
-            height: 75px;
-            background: #ffffff;
-            border: 3px solid var(--brown);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 0 var(--brown);
-            transition: transform 0.12s ease, filter 0.12s ease;
-        }
-
-        .scrolling-food:hover { transform: translateY(-3px) scale(1.05); }
-        .bad-food { background: #ffe4e4; }
-        .good-food { background: #fff9d6; }
-
-        .aiming-food-node {
-            position: absolute;
-            font-size: 64px;
-            display: none;
-            pointer-events: none;
-            z-index: 100;
-            transform: translate(-50%, -50%) scale(1.08);
-            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.2));
-        }
-
-        .aim-line-svg {
-            position: absolute;
-            pointer-events: none;
-            z-index: 98;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
-
-        .aim-path-line {
-            fill: none;
-            stroke: var(--red);
-            stroke-width: 5;
-            stroke-dasharray: 8;
-            filter: drop-shadow(0 2px 0 white);
-        }
-
-        .flying-food {
-            position: absolute;
-            font-size: 58px;
-            pointer-events: none;
-            z-index: 95;
-            transform: translate(-50%, -50%);
-            will-change: left, top;
-            filter: drop-shadow(0 2px 6px black);
-        }
-
-        .hand-pointer {
-            position: absolute;
-            font-size: 48px;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 99;
-            display: none;
-            text-shadow: 2px 2px 0 white;
-        }
-
-        .floating-text {
-            position: absolute;
-            font-size: 38px;
-            font-weight: 900;
-            color: var(--red);
-            text-shadow: 2px 2px 0 white;
-            z-index: 120;
-            pointer-events: none;
-            white-space: nowrap;
-            transition: all 0.9s cubic-bezier(0.2, 1, 0.3, 1);
-        }
-
-        .heart-particle {
-            position: absolute;
-            font-size: 28px;
-            pointer-events: none;
-            z-index: 90;
-            animation: flyUp 1s ease-out forwards;
-        }
-
-        .hit-ring {
-            position: absolute;
-            width: 70px;
-            height: 70px;
-            pointer-events: none;
-            border: 5px solid var(--yellow);
-            border-radius: 50%;
-            z-index: 88;
-            transform: translate(-50%, -50%) scale(0.3);
-            animation: ringPop 0.55s ease-out forwards;
-        }
-
-        #screen-flash {
-            position: fixed;
-            inset: 0;
-            z-index: 180;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.18s ease;
-        }
-
-        #result-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(90, 61, 40, 0.35);
-            backdrop-filter: blur(6px);
-            z-index: 250;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-        }
-
-        .result-card {
-            width: min(560px, 92vw);
-            background: #fffdf3;
-            border: 5px solid var(--brown);
-            border-radius: 28px;
-            box-shadow: 0 12px 0 var(--brown);
-            padding: 26px;
-            text-align: center;
-            animation: modalPop 0.28s ease-out;
-        }
-
-        .result-title { font-size: 34px; font-weight: 900; margin-bottom: 10px; }
-        .result-rank { font-size: 28px; font-weight: 900; color: #ff8a00; margin-bottom: 16px; }
-        .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 18px 0; }
-        .result-item { background: #ffffff; border: 3px solid var(--brown); border-radius: 16px; padding: 12px; box-shadow: 0 4px 0 var(--brown); }
-        .result-label { font-size: 12px; color: #a08068; font-weight: 900; }
-        .result-value { font-size: 24px; font-weight: 900; }
-        .result-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
-        .result-btn {
-            border: 3px solid var(--brown);
-            color: var(--brown);
-            background: #fff;
-            border-radius: 999px;
-            box-shadow: 0 5px 0 var(--brown);
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 900;
-            cursor: pointer;
-        }
-        .result-btn.primary { background: var(--yellow); }
-        .result-btn:hover { transform: translateY(2px); box-shadow: 0 3px 0 var(--brown); }
-
-        @keyframes dogWobble {
-            0% { transform: scale(1.1) rotate(-5deg); }
-            50% { transform: scale(1.1) rotate(5deg); }
-            100% { transform: scale(1) rotate(0deg); }
-        }
-        @keyframes dogShock {
-            0% { transform: scale(0.9) translate(-10px, -10px); }
-            50% { transform: scale(1.2) translate(10px, 10px); }
-            100% { transform: scale(1) translate(0); }
-        }
-        @keyframes flyUp {
-            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(1.3); opacity: 0; }
-        }
-        @keyframes pulseGold {
-            0% { text-shadow: 0 0 0 gold; }
-            100% { text-shadow: 0 0 14px gold; }
-        }
-        @keyframes ringPop {
-            0% { opacity: 0.95; transform: translate(-50%, -50%) scale(0.2); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
-        }
-        @keyframes modalPop {
-            0% { transform: scale(0.86); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes readyPulse {
-            0% { transform: translateY(0); filter: brightness(1); }
-            100% { transform: translateY(-2px); filter: brightness(1.12); }
-        }
-        @keyframes timePulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.06); }
-        }
-        @keyframes screenShake {
-            0% { transform: translate(0,0); }
-            20% { transform: translate(-7px,4px); }
-            40% { transform: translate(6px,-5px); }
-            60% { transform: translate(-4px,6px); }
-            80% { transform: translate(5px,-2px); }
-            100% { transform: translate(0,0); }
-        }
-        .combo-highlight { animation: pulseGold 0.3s ease-out; }
-        .screen-shake { animation: screenShake 0.32s ease-in-out; }
+    #screen-fx{position:fixed;inset:0;pointer-events:none;z-index:120;opacity:0;transition:.22s}.fx-hit{background:radial-gradient(circle at center,rgba(255,231,119,.42),transparent 55%)}.fx-hurt{background:rgba(255,0,0,.17)}.fx-frenzy{box-shadow:inset 0 0 90px 30px rgba(255,190,42,.52);opacity:1!important;animation:frenzyPulse .55s infinite alternate}@keyframes frenzyPulse{to{box-shadow:inset 0 0 130px 42px rgba(255,126,42,.58)}}
+    body.shake{animation:shake .22s linear} @keyframes shake{25%{transform:translate(6px,-2px)}50%{transform:translate(-5px,3px)}75%{transform:translate(4px,2px)}}
+    @keyframes dogWobble{0%{transform:scale(1.05) rotate(-4deg)}55%{transform:scale(1.12) rotate(4deg)}100%{transform:scale(1) rotate(0)}}@keyframes dogShock{0%{transform:scale(.92) translate(-8px,-8px)}50%{transform:scale(1.18) translate(8px,8px)}100%{transform:scale(1) translate(0)}}
 
 
 
-        #order-card {
-            min-width: 92px;
-            background: linear-gradient(180deg, #fffdf2, #fff1b8);
-        }
+    /* ---------- V10.3 low-clutter play layout ---------- */
+    #settings-toggle{position:absolute;left:14px;top:14px;z-index:80;visibility:hidden;border:3px solid var(--brown);border-radius:999px;background:rgba(255,255,255,.86);backdrop-filter:blur(6px);padding:9px 15px;font-weight:1000;color:var(--brown);box-shadow:0 4px 0 var(--brown);cursor:pointer}
+    #control-panel{top:64px;left:14px;width:232px;transform:scale(.96);transform-origin:top left;visibility:hidden;opacity:.98;z-index:82}
+    #control-panel.open{visibility:visible!important}
+    /* V10.4：中尺寸平衡。保留低遮挡，但不再把关键元素缩到看不清 */
+    #game-ui{top:12px;gap:8px;padding:7px 12px;background:rgba(255,252,240,.82);transform:translateX(-50%) scale(1);transform-origin:top center;z-index:38}
+    .ui-card{min-width:68px;padding:5px 11px;border-width:3px;box-shadow:0 4px 0 var(--brown)}.ui-value{font-size:21px}.ui-label{font-size:10px}#mood-card .bar,#skill-card .bar{width:78px;height:8px}
+    #camera-wrapper{right:16px;top:16px;transform:scale(.92);transform-origin:top right;opacity:.86;box-shadow:0 5px 0 var(--brown);z-index:34}#camera-wrapper:hover{opacity:1;transform:scale(1);transition:.15s}
+    #order-panel{right:16px;top:158px;width:178px;padding:11px;border-width:4px;border-radius:22px;box-shadow:0 5px 0 var(--brown);opacity:.88;transform:scale(1);transform-origin:top right;z-index:32}#order-panel:hover{opacity:1}.order-food{font-size:44px}.order-desc{font-size:13px}.order-streak{font-size:12px;padding:6px;margin-top:7px}.order-title{font-size:14px}
+    #quest-panel{display:none!important}
+    #gesture-hud{left:12px;bottom:12px;transform:scale(.9);transform-origin:bottom left;opacity:.84;z-index:30;pointer-events:none}.hand-card{width:198px;border-width:3px;padding:10px;box-shadow:0 5px 0 var(--brown)}.hand-state{font-size:13px;min-height:30px}.power-wrap{height:12px}.stable-dots{font-size:13px}
+    #conveyor-belt{top:196px;height:132px;border-top-width:7px;border-bottom-width:7px;z-index:8}.scrolling-food{width:78px;height:78px;font-size:46px;box-shadow:0 6px 0 var(--brown)}
+    #pompompurin-container{bottom:1%;z-index:16}#dog-img{width:292px}.mouth-target{width:126px;height:82px;border-width:5px}#status-tag{font-size:14px;padding:7px 20px;margin-top:-10px;opacity:.94}
+    .aim-line-svg{z-index:120}.aiming-food-node{z-index:126;font-size:66px}.hand-pointer{z-index:124;font-size:48px}.aim-force-line{stroke-width:18;opacity:1}.aim-path-line{stroke-width:7;opacity:.9}.aim-safe-circle{opacity:.5}.aim-label{font-size:14px;padding:5px 11px;border-width:2px;box-shadow:0 3px 0 var(--brown);opacity:.9;background:rgba(255,255,255,.88)}.aim-landing-dot{r:11}
+    #event-banner{top:74px;font-size:15px;padding:9px 22px;opacity:.95}
 
-        #order-val {
-            font-size: 24px;
-            letter-spacing: 2px;
-        }
 
-        .order-pop {
-            animation: orderPop 0.45s ease-out;
-        }
 
-        @keyframes orderPop {
-            0% { transform: scale(1); }
-            45% { transform: scale(1.22) rotate(-3deg); }
-            100% { transform: scale(1); }
-        }
+    /* ---------- V10.5 comfortable recognition frame ---------- */
+    /* 把原来像“监控框”的摄像头识别框改成柔和悬浮卡片，降低压迫感和遮挡感。 */
+    #camera-wrapper{
+      right:18px!important; top:88px!important; width:218px; height:150px;
+      padding:8px; border:0!important; border-radius:30px!important; overflow:visible;
+      background:rgba(255,255,255,.46)!important; backdrop-filter:blur(12px) saturate(1.08);
+      box-shadow:0 14px 36px rgba(90,61,40,.16), inset 0 0 0 2px rgba(90,61,40,.10)!important;
+      transform:none!important; opacity:.76!important; transition:opacity .16s ease, transform .16s ease, width .16s ease, height .16s ease, background .16s ease;
+      z-index:33!important;
+    }
+    #camera-wrapper:hover{opacity:.96!important; transform:translateY(-2px)!important;}
+    #webcam{
+      width:100%!important; height:100%!important; border-radius:23px; border:3px solid rgba(90,61,40,.26);
+      object-fit:cover; box-shadow:inset 0 0 0 2px rgba(255,255,255,.55); opacity:.92;
+      background:#fff;
+    }
+    #camera-wrapper.hand-detected #webcam{border-color:rgba(115,217,125,.78); box-shadow:0 0 0 4px rgba(115,217,125,.14), inset 0 0 0 2px rgba(255,255,255,.55)}
+    #camera-wrapper.no-hand #webcam{border-color:rgba(255,174,66,.62); box-shadow:0 0 0 4px rgba(255,174,66,.10), inset 0 0 0 2px rgba(255,255,255,.55)}
+    .cam-label{
+      left:14px!important; right:auto!important; bottom:14px!important; max-width:calc(100% - 28px);
+      background:rgba(90,61,40,.78)!important; color:#fff; border-radius:999px; padding:5px 12px!important;
+      font-size:12px!important; line-height:1; text-align:left; box-shadow:0 3px 10px rgba(90,61,40,.16);
+    }
+    .cam-tools{position:absolute;right:10px;top:-13px;display:flex;gap:6px;z-index:3;opacity:.92;}
+    .cam-tool-btn{border:2px solid rgba(90,61,40,.76);background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:1000;color:var(--brown);box-shadow:0 3px 0 rgba(90,61,40,.72);cursor:pointer;}
+    .cam-tool-btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(90,61,40,.72)}
+    #camera-wrapper.cam-mini{width:118px;height:88px;opacity:.64!important;border-radius:24px!important;padding:6px;}
+    #camera-wrapper.cam-mini #webcam{border-radius:18px;border-width:2px;}
+    #camera-wrapper.cam-mini .cam-label{width:14px;height:14px;padding:0!important;font-size:0;left:auto!important;right:12px!important;bottom:12px!important;background:var(--green)!important;box-shadow:0 0 0 3px rgba(255,255,255,.75),0 3px 10px rgba(90,61,40,.18)}
+    #camera-wrapper.cam-mini.no-hand .cam-label{background:var(--orange)!important;}
+    #camera-wrapper.cam-status-only{width:180px;height:42px;padding:0;border-radius:999px!important;background:rgba(255,255,255,.72)!important;opacity:.82!important;box-shadow:0 8px 24px rgba(90,61,40,.12), inset 0 0 0 2px rgba(90,61,40,.12)!important;}
+    #camera-wrapper.cam-status-only #webcam{display:none;}
+    #camera-wrapper.cam-status-only .cam-label{position:static!important;display:flex;align-items:center;justify-content:center;width:100%;height:100%;max-width:none;border-radius:999px;background:transparent!important;color:var(--brown);font-size:13px!important;padding:0!important;box-shadow:none;font-weight:1000;text-align:center;}
+    #camera-wrapper.cam-status-only .cam-tools{right:4px;top:-13px;}
+    /* 识别框下移后，点单卡稍微后退，避免右侧堆叠压迫。 */
+    #order-panel{top:252px!important; opacity:.84;}
+    @media(max-width:900px){#camera-wrapper{top:76px!important;right:10px!important;width:148px;height:108px}.cam-tool-btn{font-size:10px;padding:4px 7px}#order-panel{top:198px!important}}
 
-        .armed-release {
-            filter: drop-shadow(0 0 12px rgba(255, 179, 77, 0.9));
-            transform: translate(-50%, -50%) scale(1.18) !important;
-        }
 
-        @media (max-width: 900px) {
-            #control-panel { width: 185px; padding: 12px; }
-            #game-ui { gap: 6px; padding: 5px 10px; }
-            .ui-card { min-width: 64px; padding: 4px 8px; }
-            .ui-value { font-size: 18px; }
-            #gesture-hud { width: 220px; }
-            #dog-img { width: 220px; }
-            .tutorial-steps { grid-template-columns: 1fr; }
-        }
-    </style>
+
+    /* ---------- V11: 摄像头退后台 + 轻量状态胶囊 ---------- */
+    #camera-wrapper{
+      top:84px!important; right:18px!important; z-index:58!important;
+      border:none!important; box-shadow:none!important; overflow:visible!important;
+      background:transparent!important; transform:none!important; opacity:1!important;
+    }
+    #camera-wrapper.cam-status-only{
+      width:210px!important; height:44px!important; padding:0!important;
+      border-radius:999px!important; background:rgba(255,255,255,.74)!important;
+      backdrop-filter:blur(10px); box-shadow:0 8px 24px rgba(90,61,40,.13), inset 0 0 0 2px rgba(90,61,40,.11)!important;
+    }
+    #camera-wrapper.cam-status-only #webcam{
+      display:block!important; position:absolute!important; width:1px!important; height:1px!important;
+      opacity:0!important; pointer-events:none!important; left:-9999px!important; top:-9999px!important;
+    }
+    #camera-wrapper.cam-status-only .cam-label{
+      position:static!important; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+      background:transparent!important; color:var(--brown)!important; font-size:13px!important; font-weight:1000!important;
+      padding:0 36px 0 18px!important; box-shadow:none!important; text-align:center; white-space:nowrap;
+    }
+    #camera-wrapper.cam-status-only .cam-label:before{
+      content:""; width:10px; height:10px; border-radius:50%; margin-right:8px; background:var(--orange);
+      box-shadow:0 0 0 4px rgba(255,174,66,.15);
+    }
+    #camera-wrapper.cam-status-only.hand-detected .cam-label:before{background:var(--green); box-shadow:0 0 0 4px rgba(115,217,125,.18)}
+    #camera-wrapper.cam-status-only .cam-tools{right:5px!important; top:5px!important; transform:scale(.88); transform-origin:center;}
+    #camera-wrapper.cam-preview{
+      width:185px!important; height:138px!important; padding:8px!important; border-radius:24px!important;
+      background:rgba(255,255,255,.56)!important; backdrop-filter:blur(10px); opacity:.72!important;
+      box-shadow:0 10px 28px rgba(90,61,40,.16), inset 0 0 0 2px rgba(90,61,40,.10)!important;
+    }
+    #camera-wrapper.cam-preview:hover{opacity:.94!important; transform:translateY(-2px)!important;}
+    #camera-wrapper.cam-preview #webcam{position:static!important; width:169px!important; height:122px!important; opacity:.62!important; display:block!important; border-radius:18px!important; border:2px solid rgba(90,61,40,.18);}
+    #camera-wrapper.cam-preview .cam-label{position:absolute!important;left:14px!important;right:14px!important;bottom:12px!important;border-radius:999px!important;background:rgba(90,61,40,.72)!important;font-size:11px!important;padding:3px!important;}
+    #camera-wrapper.cam-preview .cam-tools{right:8px!important; top:-12px!important;}
+    #camera-wrapper.cam-mini{
+      width:74px!important; height:44px!important; padding:0!important; border-radius:999px!important;
+      background:rgba(255,255,255,.62)!important; backdrop-filter:blur(10px); opacity:.78!important;
+      box-shadow:0 8px 24px rgba(90,61,40,.12), inset 0 0 0 2px rgba(90,61,40,.10)!important;
+    }
+    #camera-wrapper.cam-mini #webcam{display:block!important; position:absolute!important; width:1px!important; height:1px!important; opacity:0!important; left:-9999px!important;}
+    #camera-wrapper.cam-mini .cam-label{position:static!important;width:44px!important;height:44px!important;border-radius:50%!important;font-size:0!important;padding:0!important;background:transparent!important;}
+    #camera-wrapper.cam-mini .cam-label:before{content:"";display:block;width:14px;height:14px;border-radius:50%;background:var(--orange);margin:15px auto;box-shadow:0 0 0 5px rgba(255,174,66,.18)}
+    #camera-wrapper.cam-mini.hand-detected .cam-label:before{background:var(--green);box-shadow:0 0 0 5px rgba(115,217,125,.20)}
+    #camera-wrapper.cam-mini .cam-tools{right:-6px!important; top:-11px!important; transform:scale(.78)}
+    #order-panel{top:150px!important; right:18px!important;}
+    #gesture-hud{opacity:.78!important;}
+    #gesture-hud:hover{opacity:1!important;}
+    .mouth-target{width:118px!important;height:76px!important;border-width:5px!important;}
+    .aim-safe-circle{opacity:.38!important;}
+    .aim-label{background:rgba(255,255,255,.78)!important;}
+    @media(max-width:900px){#camera-wrapper{top:78px!important;right:10px!important}#order-panel{top:138px!important}}
+
+    /* ---------- modal ---------- */
+    #result-modal{position:fixed;inset:0;z-index:350;background:rgba(90,61,40,.38);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:20px}.result-card{width:min(560px,94vw);background:#fff9e8;border:6px solid var(--brown);border-radius:34px;box-shadow:0 13px 0 var(--brown),0 30px 80px rgba(0,0,0,.2);padding:24px;text-align:center}.result-card h2{font-size:36px;margin:5px 0 12px}.result-grade{font-size:68px;font-weight:1000;color:#ff8b3d;text-shadow:3px 3px 0 #fff}.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0}.stat{background:#fff;border:3px solid var(--brown);border-radius:18px;padding:10px}.stat label{display:block;font-size:12px;color:#9b7658;font-weight:900}.stat b{font-size:24px}.result-actions{display:flex;gap:10px}.result-actions button{flex:1;padding:12px;border:4px solid var(--brown);border-radius:20px;background:#fff;font-weight:1000;font-size:17px;box-shadow:0 6px 0 var(--brown);cursor:pointer}.result-actions button.primary{background:var(--red);color:#fff}
+
+    @media(max-width:900px){.menu-grid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.menu-card{overflow:auto;max-height:94vh}.menu-title{font-size:34px}#control-panel{width:205px}.ui-card{min-width:62px;padding:4px 9px}.ui-value{font-size:19px}#order-panel{display:none}#quest-panel{display:none}#dog-img{width:250px}#camera-wrapper{transform:scale(.9);transform-origin:top right}}
+  </style>
 </head>
 <body>
-
-    <div id="start-menu">
-        <div class="menu-title">🍮 布丁狗回转甜品店 V4.0 🐶</div>
-        <div class="menu-subtitle">增强体验版：手势提示 · 力度条 · 难度递进 · 结算评级 · 命中特效</div>
-
-        <div class="tutorial-card">
-            <div class="tutorial-title">
-                <span>怎么玩？</span>
-                <span>🎮 体感投喂挑战</span>
-            </div>
-            <div class="tutorial-steps">
-                <div class="tutorial-step"><span class="tutorial-icon">✊</span><div class="tutorial-text">手移动到食物上方<br>握拳抓住甜品</div></div>
-                <div class="tutorial-step"><span class="tutorial-icon">🎯</span><div class="tutorial-text">握住向后拉<br>看轨迹和力度条</div></div>
-                <div class="tutorial-step"><span class="tutorial-icon">🖐️</span><div class="tutorial-text">张开手掌发射<br>喂给布丁狗得分</div></div>
-            </div>
+  <div id="start-menu">
+    <div class="menu-card">
+      <div class="menu-title">🍮 布丁狗回转寿司 V11 🍣</div>
+      <div class="menu-subtitle">无摄像头窗口 · 轻松投喂模式 · 布丁狗等你瞄准</div>
+      <div class="menu-grid">
+        <div class="how-card">
+          <div class="section-title">怎么玩？先稳，再扔，最后追求完美</div>
+          <div class="steps">
+            <div class="step"><div class="emoji">✊</div><b>稳定握拳</b><span>手移动到食物上，连续稳定握拳才会抓取，降低误触。</span></div>
+            <div class="step"><div class="emoji">🎯</div><b>向后拉开</b><span>拉出力度条，进入绿色/黄色区间会显示“可发射”。</span></div>
+            <div class="step"><div class="emoji">🖐️</div><b>稳定张手</b><span>连续张手确认后才发射；力度太小只取消，不会乱扔。</span></div>
+          </div>
+          <div class="tips">V11 推荐玩法：摄像头默认退到后台，只保留一个小状态胶囊。抓住食物后布丁狗会短暂停下来等你瞄准，发射时有轻微曲线修正；按 C 可临时打开调试预览，按 S 打开设置，按 P 暂停。</div>
         </div>
-
-        <div class="time-selector">
-            <button class="time-btn" onclick="selectTime(60, this)">⏱️ 60 秒挑战</button>
-            <button class="time-btn active" onclick="selectTime(180, this)">⏱️ 3 分钟大胃王</button>
-            <button class="time-btn" onclick="selectTime(9999, this)">♾️ 无限练习模式</button>
+        <div class="setting-card">
+          <div class="section-title">开始设置</div>
+          <div class="order-title">挑战时长</div>
+          <div class="mode-row">
+            <button class="time-btn pill" onclick="selectTime(60,this)">60 秒</button>
+            <button class="time-btn pill active" onclick="selectTime(180,this)">3 分钟</button>
+            <button class="time-btn pill" onclick="selectTime(9999,this)">无限练习</button>
+          </div>
+          <div class="order-title">辅助瞄准</div>
+          <div class="assist-row">
+            <button class="assist-btn pill" onclick="selectAssist(0,this)">关闭</button>
+            <button class="assist-btn pill" onclick="selectAssist(1,this)">推荐</button>
+            <button class="assist-btn pill" onclick="selectAssist(2,this)">强辅助</button>
+          </div>
+          <button id="start-game-btn" onclick="startGameNow()">开始投喂布丁狗</button>
+          <div class="tips">首次打开浏览器会询问摄像头权限。V11 默认不显示摄像头画面，只显示识别状态，更适合展示和游玩。</div>
         </div>
-        <button id="start-game-btn" onclick="startGameNow()">🎌 开启布丁狗大胃王 🎌</button>
+      </div>
     </div>
+  </div>
 
-    <div id="control-panel">
-        <div class="control-group">
-            <label>🍣 基础速度: <span id="speed-val-display">2.5</span></label>
-            <input type="range" id="speed-slider" min="1.0" max="8.0" step="0.5" value="2.5" oninput="updateSliders()">
-        </div>
-        <div class="control-group">
-            <label>📦 基础间距: <span id="spacing-val-display">180px</span></label>
-            <input type="range" id="spacing-slider" min="100" max="300" step="10" value="180" oninput="updateSliders()">
-        </div>
-        <div class="control-group">
-            <label>🐕 布丁狗速度: <span id="dog-speed-display">3.2</span></label>
-            <input type="range" id="dog-speed-slider" min="1.0" max="10.0" step="0.2" value="3.2" oninput="updateDogSpeed()">
-        </div>
-        <div class="tiny-tip">提示：挑战模式会自动加速；无限模式适合调试手势。</div>
+  <div id="screen-fx"></div>
+  <div id="event-banner"></div>
+  <div id="toast-layer"></div>
+  <button id="settings-toggle" onclick="toggleSettingsPanel()">⚙️ 设置</button>
+
+  <div id="control-panel">
+    <div class="control-group"><label>🍣 传送带速度 <span id="speed-val-display">2.6</span></label><input id="speed-slider" type="range" min="1" max="8" step="0.2" value="2.6" oninput="updateSliders()"></div>
+    <div class="control-group"><label>📦 食物间距 <span id="spacing-val-display">185px</span></label><input id="spacing-slider" type="range" min="110" max="320" step="5" value="185" oninput="updateSliders()"></div>
+    <div class="control-group"><label>🐕 布丁狗速度 <span id="dog-speed-display">3.1</span></label><input id="dog-speed-slider" type="range" min="1" max="10" step="0.1" value="3.1" oninput="updateDogSpeed()"></div>
+    <div class="control-group"><label>🧲 辅助强度 <span id="assist-display">强辅助</span></label><input id="assist-slider" type="range" min="0" max="2" step="1" value="2" oninput="setAssistFromSlider()"></div>
+    <button class="small-btn" onclick="togglePause()">P 暂停 / 继续</button>
+  </div>
+
+  <div id="game-ui">
+    <div class="ui-card"><div class="ui-label">时间</div><div id="time-val" class="ui-value">180</div></div>
+    <div class="ui-card"><div class="ui-label">美味值</div><div id="score-val" class="ui-value">0</div></div>
+    <div class="ui-card"><div class="ui-label">连吃</div><div id="combo-val" class="ui-value">0</div></div>
+    <div class="ui-card" id="mood-card"><div class="ui-label">心情</div><div class="bar"><div id="mood-fill"></div></div></div>
+    <div class="ui-card" id="skill-card"><div class="ui-label">布丁能量</div><div class="bar"><div id="skill-fill"></div></div></div>
+    <div class="ui-card" id="life-card"><div class="ui-label">开心值</div><div id="life-val" class="ui-value">❤️❤️❤️</div></div>
+  </div>
+
+  <div id="camera-wrapper" class="cam-soft">
+    <video id="webcam" autoplay playsinline></video>
+    <div class="cam-label" id="cam-status">等待摄像头</div>
+    <div class="cam-tools">
+      <button type="button" class="cam-tool-btn" onclick="cycleCameraMode(event)" title="切换识别状态/调试预览">C 预览</button>
     </div>
+  </div>
 
-    <svg id="aim-line-0" class="aim-line-svg"><path id="aim-path-0" class="aim-path-line" d=""/></svg>
-    <svg id="aim-line-1" class="aim-line-svg"><path id="aim-path-1" class="aim-path-line" d=""/></svg>
+  <div id="order-panel">
+    <div class="order-title">🍽️ 今日点单</div>
+    <div id="order-food" class="order-food">🍮</div>
+    <div id="order-desc" class="order-desc">命中它，额外奖励！</div>
+    <div id="order-streak" class="order-streak">连续点单：0</div>
+  </div>
 
-    <div id="camera-wrapper"><video id="webcam" autoplay playsinline></video></div>
+  <div id="quest-panel">
+    <div class="quest-title">📌 本局小目标</div>
+    <div id="quest-list"></div>
+  </div>
 
-    <div id="gesture-hud" class="warn">
-        <div id="gesture-status">👋 点击开始后，请把手放进摄像头画面</div>
-        <div id="gesture-mini">握拳抓取，张开发射；按空格释放技能。</div>
+  <div id="conveyor-belt"><div id="belt-track"></div></div>
+  <svg id="aim-line-0" class="aim-line-svg">
+    <circle id="safe-circle-0" class="aim-safe-circle" cx="0" cy="0" r="52"></circle>
+    <line id="force-line-0" class="aim-force-line" x1="0" y1="0" x2="0" y2="0"></line>
+    <circle id="anchor-dot-0" class="aim-anchor-dot" cx="0" cy="0" r="9"></circle>
+    <path id="aim-path-0" class="aim-path-line" d=""></path>
+    <circle id="landing-dot-0" class="aim-landing-dot" cx="0" cy="0" r="12"></circle>
+  </svg>
+  <svg id="aim-line-1" class="aim-line-svg">
+    <circle id="safe-circle-1" class="aim-safe-circle" cx="0" cy="0" r="52"></circle>
+    <line id="force-line-1" class="aim-force-line" x1="0" y1="0" x2="0" y2="0"></line>
+    <circle id="anchor-dot-1" class="aim-anchor-dot" cx="0" cy="0" r="9"></circle>
+    <path id="aim-path-1" class="aim-path-line" d=""></path>
+    <circle id="landing-dot-1" class="aim-landing-dot" cx="0" cy="0" r="12"></circle>
+  </svg>
+  <div id="aim-label-0" class="aim-label">拉远一点</div><div id="aim-label-1" class="aim-label">拉远一点</div>
+
+  <div id="pompompurin-container"><div class="dog-stage"><div id="mouth-target" class="mouth-target"></div><img id="dog-img" src="dog_normal.png" alt="布丁狗"></div><div id="status-tag">把手放进画面，握拳抓食物</div></div>
+  <div id="aiming-food-0" class="aiming-food-node"></div><div id="aiming-food-1" class="aiming-food-node"></div>
+  <div id="pointer-0" class="hand-pointer">🐾</div><div id="pointer-1" class="hand-pointer">🐾</div>
+
+  <div id="gesture-hud">
+    <div class="hand-card"><div class="hand-title"><span>左侧手势</span><span id="h0-icon">🐾</span></div><div id="h0-state" class="hand-state">等待识别</div><div class="power-wrap"><div id="h0-power" class="power-fill"></div></div><div id="h0-dots" class="stable-dots">○ ○ ○ ○ ○</div></div>
+    <div class="hand-card"><div class="hand-title"><span>右侧手势</span><span id="h1-icon">🐾</span></div><div id="h1-state" class="hand-state">等待识别</div><div class="power-wrap"><div id="h1-power" class="power-fill"></div></div><div id="h1-dots" class="stable-dots">○ ○ ○ ○ ○</div></div>
+  </div>
+
+  <audio id="eat-sound" src="eat.mp3" preload="auto"></audio>
+
+  <div id="result-modal">
+    <div class="result-card">
+      <h2>🎉 本局结束</h2>
+      <div id="result-grade" class="result-grade">S</div>
+      <div id="result-title" style="font-weight:1000;font-size:20px">黄金布丁饲养员</div>
+      <div class="stat-grid">
+        <div class="stat"><label>最终美味值</label><b id="r-score">0</b></div>
+        <div class="stat"><label>最高连吃</label><b id="r-combo">0</b></div>
+        <div class="stat"><label>成功投喂</label><b id="r-hit">0</b></div>
+        <div class="stat"><label>完成点单</label><b id="r-order">0</b></div>
+      </div>
+      <div class="result-actions"><button class="primary" onclick="restartGame()">再来一局</button><button onclick="backToMenu()">返回菜单</button></div>
     </div>
-
-    <div id="force-panel">
-        <div id="force-label">力度 0%</div>
-        <div id="force-bar"><div id="force-fill"></div></div>
-    </div>
-
-    <div id="game-ui">
-        <div class="ui-card" id="time-card"><div class="ui-label">⏱️ TIME</div><div id="time-val" class="ui-value">180</div></div>
-        <div class="ui-card"><div class="ui-label">🍮 美味值</div><div id="score-val" class="ui-value">0</div></div>
-        <div class="ui-card" id="order-card"><div class="ui-label">📋 点单</div><div id="order-val" class="ui-value">🍮</div></div>
-        <div class="ui-card" id="combo-card"><div class="ui-label">⚡ 连吃</div><div id="combo-val" class="ui-value">0</div></div>
-        <div class="ui-card" id="skill-card"><div class="ui-label">⭐ 布丁能量</div><div id="skill-val" class="ui-value">0%</div></div>
-        <div class="ui-card" id="life-card" style="background: #ffeaa7;"><div class="ui-label">❤️ 开心值</div><div id="life-val" class="ui-value">❤️❤️❤️</div></div>
-    </div>
-
-    <div id="difficulty-tag">🍮 新手投喂时间</div>
-    <div id="conveyor-belt"><div id="belt-track"></div></div>
-    <div id="pompompurin-container"><img src="dog_normal.png" id="dog-img" alt="布丁狗"><div id="status-tag">双手“握拳”抓寿司，张开手掌发射！</div></div>
-
-    <div id="aiming-food-0" class="aiming-food-node"></div>
-    <div id="aiming-food-1" class="aiming-food-node"></div>
-    <div id="pointer-0" class="hand-pointer">🐾</div>
-    <div id="pointer-1" class="hand-pointer">🐾</div>
-    <div id="screen-flash"></div>
-
-    <div id="result-modal">
-        <div class="result-card">
-            <div class="result-title" id="result-title">🎉 挑战结束</div>
-            <div class="result-rank" id="result-rank">A级布丁饲养员</div>
-            <div class="result-grid">
-                <div class="result-item"><div class="result-label">最终得分</div><div class="result-value" id="result-score">0</div></div>
-                <div class="result-item"><div class="result-label">最高连击</div><div class="result-value" id="result-combo">0</div></div>
-                <div class="result-item"><div class="result-label">成功投喂</div><div class="result-value" id="result-hits">0</div></div>
-                <div class="result-item"><div class="result-label">失误 / 危险食物</div><div class="result-value" id="result-miss">0</div></div>
-            </div>
-            <div id="result-comment" style="font-weight:900; line-height:1.6; color:#7a5a40;">布丁狗还想再吃一轮！</div>
-            <div class="result-actions">
-                <button class="result-btn primary" onclick="restartGame()">再来一局</button>
-                <button class="result-btn" onclick="backToMenu()">返回菜单</button>
-            </div>
-        </div>
-    </div>
-
-    <audio id="eat-sound" src="eat.mp3" preload="auto"></audio>
-
-    <script>
-        // ---------- DOM 元素 ----------
-        const video = document.getElementById('webcam');
-        const dogImg = document.getElementById('dog-img');
-        const dogContainer = document.getElementById('pompompurin-container');
-        const beltTrack = document.getElementById('belt-track');
-        const statusTag = document.getElementById('status-tag');
-        const scoreVal = document.getElementById('score-val');
-        const timeVal = document.getElementById('time-val');
-        const lifeVal = document.getElementById('life-val');
-        const comboValElem = document.getElementById('combo-val');
-        const skillValElem = document.getElementById('skill-val');
-        const eatSound = document.getElementById('eat-sound');
-        const startMenu = document.getElementById('start-menu');
-        const resultModal = document.getElementById('result-modal');
-        const gestureHud = document.getElementById('gesture-hud');
-        const gestureStatus = document.getElementById('gesture-status');
-        const gestureMini = document.getElementById('gesture-mini');
-        const forcePanel = document.getElementById('force-panel');
-        const forceFill = document.getElementById('force-fill');
-        const forceLabel = document.getElementById('force-label');
-        const screenFlash = document.getElementById('screen-flash');
-        const difficultyTag = document.getElementById('difficulty-tag');
-        const timeCard = document.getElementById('time-card');
-        const skillCard = document.getElementById('skill-card');
-        const orderValElem = document.getElementById('order-val');
-        const orderCard = document.getElementById('order-card');
-
-        // ========== 全局游戏状态 ==========
-        let score = 0, timeLeft = 180, lives = 3, gameActive = false, modeSelected = 180;
-        let dogX = window.innerWidth / 2, dogSpeed = 3.2, dogDirection = 1;
-        let baseConfigSpeed = 2.5, baseConfigSpacing = 180;
-        let currentConfigSpeed = 2.5, currentConfigSpacing = 180;
-        let gameClockInterval = null;
-        let elapsedSeconds = 0;
-        let mediaPipeStarted = false;
-
-        // 体验增强统计
-        let totalHits = 0;
-        let totalThrows = 0;
-        let totalMisses = 0;
-        let totalBadHits = 0;
-        let completedOrders = 0;
-        let currentOrder = "🍮";
-        const orderPool = ["🍮", "🍪", "🍩", "🍓", "🍔", "🍟", "🍕", "🍣", "🍰", "🍉", "🥞"];
-
-        // ========== 连击 / 技能变量 ==========
-        let combo = 0;
-        let maxCombo = 0;
-        let comboTimer = null;
-        let skillEnergy = 0;
-        let skillReady = false;
-        let doubleScoreMode = false;
-        let doubleTimeout = null;
-
-        const foodEffects = {
-            "🍮": {score: 20}, "🍪": {score: 10}, "🍩": {score: 15}, "🍓": {score: 15},
-            "🍔": {score: 30}, "🍟": {score: 20}, "🍕": {score: 25}, "🍣": {score: 20},
-            "🍰": {special: "double"}, "🍉": {special: "heal"}, "🥞": {score: 15},
-            "🌶️": {special: "hurt"}, "💣": {special: "bomb"}
-        };
-
-        // 图片映射：请保证这些图片和本 HTML 放在同一目录
-        const dogImages = {
-            normal: "dog_normal.png",
-            happy:  "dog_happy.png",
-            angry:  "dog_angry.png",
-            skill:  "dog_skill.png",
-            dead:   "dog_dead.png"
-        };
-        const DEFAULT_DOG_IMG = "dog_normal.png";
-
-        function setDogState(type, force = false) {
-            if(!gameActive && !force) return;
-            const imgSrc = dogImages[type] || DEFAULT_DOG_IMG;
-            const tempImg = new Image();
-            tempImg.onerror = () => { dogImg.src = DEFAULT_DOG_IMG; };
-            tempImg.onload = () => { dogImg.src = imgSrc; };
-            tempImg.src = imgSrc;
-            dogImg.src = imgSrc;
-
-            switch(type) {
-                case "happy": statusTag.innerText = "😋 超美味！布丁狗开心摇尾巴~"; break;
-                case "angry": statusTag.innerText = "😡 好辣 / 炸弹！布丁狗被吓到！"; break;
-                case "skill": statusTag.innerText = "✨ 黄金布丁时间！双倍积分 ✨"; break;
-                case "dead": statusTag.innerText = "💀 布丁狗吃撑倒下啦..."; break;
-                default: statusTag.innerText = "🍣 继续投喂我~ 握拳抓取，张开发射！";
-            }
-        }
-
-        function updateGestureStatus(text, tone = "warn", mini = "握拳抓取，张开发射；按空格释放技能。") {
-            gestureHud.className = tone;
-            gestureStatus.innerText = text;
-            gestureMini.innerText = mini;
-        }
-
-
-        function pickNewOrder(first = false) {
-            let next = currentOrder;
-            while(!first && next === currentOrder) {
-                next = orderPool[Math.floor(Math.random() * orderPool.length)];
-            }
-            if(first) next = orderPool[Math.floor(Math.random() * orderPool.length)];
-            currentOrder = next;
-            orderValElem.innerText = currentOrder;
-            orderCard.classList.remove('order-pop');
-            void orderCard.offsetWidth;
-            orderCard.classList.add('order-pop');
-        }
-
-        function applyOrderBonus(emoji, x, y) {
-            if(emoji !== currentOrder) return false;
-            completedOrders++;
-            const orderBonus = 80 + Math.min(120, completedOrders * 10);
-            score += orderBonus;
-            scoreVal.innerText = score;
-            addSkillEnergy(18);
-            showFloatingText(`📋 点单完成 +${orderBonus}`, x, y - 92, "#ff9900");
-            flash("skill");
-            for(let i = 0; i < 8; i++) createHeart(x, y, ['📋', '⭐', '✨', '💛']);
-            pickNewOrder(false);
-            updateGestureStatus("📋 点单完成！", "skill", "命中指定食物会获得额外奖励，并刷新下一单。 ");
-            return true;
-        }
-
-        function showForceBar(percent, x, y) {
-            const p = Math.max(0, Math.min(100, Math.round(percent)));
-            forcePanel.style.display = "block";
-            forcePanel.style.left = x + "px";
-            forcePanel.style.top = y + "px";
-            forceFill.style.width = p + "%";
-            if (p < 25) forceLabel.innerText = `力度 ${p}%｜再拉远一点`;
-            else if (p < 75) forceLabel.innerText = `力度 ${p}%｜可以发射`;
-            else forceLabel.innerText = `力度 ${p}%｜完美！`;
-        }
-
-        function hideForceBar() {
-            forcePanel.style.display = "none";
-        }
-
-        function showFloatingText(text, x, y, color = "#ff6b6b") {
-            const div = document.createElement("div");
-            div.innerText = text;
-            div.className = "floating-text";
-            div.style.left = x + "px";
-            div.style.top = y + "px";
-            div.style.color = color;
-            div.style.fontWeight = "bold";
-            div.style.zIndex = "999";
-            document.body.appendChild(div);
-            setTimeout(() => {
-                div.style.transform = "translateY(-90px) scale(1.06)";
-                div.style.opacity = "0";
-            }, 20);
-            setTimeout(() => div.remove(), 900);
-        }
-
-        function createHeart(x, y, pool = ['❤️', '✨', '⭐', '💖']) {
-            const heart = document.createElement('div');
-            heart.className = 'heart-particle';
-            heart.innerText = pool[Math.floor(Math.random() * pool.length)];
-            heart.style.left = x + 'px';
-            heart.style.top = y + 'px';
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 80 + Math.random() * 100;
-            heart.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
-            heart.style.setProperty('--ty', Math.sin(angle) * distance - 40 + 'px');
-            document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 1000);
-        }
-
-        function createHitRing(x, y, color = "#fce67c") {
-            const ring = document.createElement("div");
-            ring.className = "hit-ring";
-            ring.style.left = x + "px";
-            ring.style.top = y + "px";
-            ring.style.borderColor = color;
-            document.body.appendChild(ring);
-            setTimeout(() => ring.remove(), 600);
-        }
-
-        function screenShake() {
-            document.body.classList.remove('screen-shake');
-            void document.body.offsetWidth;
-            document.body.classList.add('screen-shake');
-            setTimeout(() => document.body.classList.remove('screen-shake'), 360);
-        }
-
-        function flash(type = "good") {
-            const colorMap = {
-                good: "rgba(252, 230, 124, 0.28)",
-                bad: "rgba(255, 80, 80, 0.32)",
-                heal: "rgba(119, 221, 119, 0.28)",
-                skill: "rgba(255, 195, 68, 0.34)"
-            };
-            screenFlash.style.background = colorMap[type] || colorMap.good;
-            screenFlash.style.opacity = "1";
-            setTimeout(() => screenFlash.style.opacity = "0", 120);
-        }
-
-        function activateSkill() {
-            if(!gameActive) return false;
-            if(!skillReady) {
-                showFloatingText("❌ 布丁能量未满", dogX, window.innerHeight - 180, "#a08068");
-                updateGestureStatus("⭐ 技能还没满", "warn", "继续投喂可积攒布丁能量。");
-                return false;
-            }
-            skillReady = false;
-            skillEnergy = 0;
-            skillValElem.innerText = "0%";
-            skillCard.classList.remove("skill-ready");
-            if(doubleTimeout) clearTimeout(doubleTimeout);
-            doubleScoreMode = true;
-            setDogState("skill");
-            flash("skill");
-            showFloatingText("⭐ 黄金布丁时间 · 双倍积分 ⭐", dogX, window.innerHeight - 230, "#ffaa44");
-            updateGestureStatus("✨ 黄金布丁时间！", "skill", "5秒内所有普通得分翻倍。继续投喂！");
-            doubleTimeout = setTimeout(() => {
-                doubleScoreMode = false;
-                if(gameActive) {
-                    setDogState("normal");
-                    statusTag.innerText = "双倍结束，继续喂饱布丁狗~";
-                    showFloatingText("双倍结束", dogX, window.innerHeight - 200, "#888");
-                    updateGestureStatus("🖐️ 张开手掌，靠近食物后握拳抓取", "ok");
-                }
-            }, 5000);
-            return true;
-        }
-
-        function resetComboTimer() {
-            if(comboTimer) clearTimeout(comboTimer);
-            comboTimer = setTimeout(() => {
-                if(combo > 0 && gameActive) {
-                    combo = 0;
-                    comboValElem.innerText = "0";
-                    comboValElem.classList.remove("combo-highlight");
-                    showFloatingText("连击中断", dogX, window.innerHeight - 180, "#aaa");
-                }
-            }, 3000);
-        }
-
-        function updateSkillUI() {
-            const percent = Math.floor(skillEnergy);
-            skillValElem.innerText = percent + "%";
-            if(skillEnergy >= 100 && !skillReady) {
-                skillReady = true;
-                skillEnergy = 100;
-                skillValElem.innerText = "100%";
-                skillCard.classList.add("skill-ready");
-                showFloatingText("✨ 技能就绪！按空格 ✨", dogX, window.innerHeight - 200, "#ff9900");
-                statusTag.innerText = "⭐ 布丁能量满啦！按【空格】发动双倍 ⭐";
-                updateGestureStatus("⭐ 技能就绪！", "skill", "按空格开启黄金布丁时间。命中得分翻倍！");
-            }
-        }
-
-        function addSkillEnergy(amount) {
-            if(!gameActive || skillReady) return;
-            skillEnergy = Math.min(100, skillEnergy + amount);
-            updateSkillUI();
-        }
-
-        function handleFoodImpact(emoji) {
-            if(!gameActive) return;
-            const dogRect = dogImg.getBoundingClientRect();
-            const centerX = dogRect.left + dogRect.width / 2;
-            const centerY = dogRect.top + dogRect.height / 2;
-            const effect = foodEffects[emoji] || {score:10};
-
-            if(effect.special === "hurt" || effect.special === "bomb" || emoji === '🌶️' || emoji === '💣') {
-                totalBadHits++;
-                flash("bad");
-                screenShake();
-                createHitRing(centerX, centerY, "#ff6b6b");
-
-                if(timeLeft !== 9999) {
-                    lives--;
-                    if(lives < 0) lives = 0;
-                    lifeVal.innerText = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
-                    showFloatingText(emoji === '💣' ? "💥 炸弹爆炸 -1开心值" : "🌶️ 辣到跺脚 -1开心值", centerX, centerY - 40, "#ff4444");
-                    setDogState("angry");
-                    dogImg.style.animation = 'dogShock 0.6s ease-in-out';
-                    setTimeout(() => dogImg.style.animation = '', 600);
-                    combo = 0;
-                    comboValElem.innerText = "0";
-                    if(comboTimer) clearTimeout(comboTimer);
-                    updateGestureStatus("⚠️ 危险食物命中！", "bad", "辣椒和炸弹会扣开心值，并清空连击。");
-
-                    if(lives <= 0 && timeLeft !== 9999) {
-                        finishGame("fail");
-                        return;
-                    }
-                } else {
-                    showFloatingText(emoji === '💣' ? "💣 炸弹无效｜练习模式" : "🌶️ 太辣但无敌", centerX, centerY - 40, "#ffaa88");
-                    dogImg.style.animation = 'dogShock 0.4s ease-in-out';
-                    setTimeout(() => dogImg.style.animation = '', 400);
-                }
-                combo = 0;
-                comboValElem.innerText = "0";
-                if(comboTimer) clearTimeout(comboTimer);
-                return;
-            }
-
-            totalHits++;
-            createHitRing(centerX, centerY, effect.special === "heal" ? "#77dd77" : "#fce67c");
-            applyOrderBonus(emoji, centerX, centerY);
-            flash(effect.special === "heal" ? "heal" : "good");
-
-            if(effect.special === "heal") {
-                if(timeLeft !== 9999 && lives < 3) {
-                    lives++;
-                    lifeVal.innerText = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
-                    showFloatingText("🍉 回血 +1 ❤️", centerX, centerY - 50, "#55bb55");
-                } else {
-                    score += 10;
-                    scoreVal.innerText = score;
-                    showFloatingText("🍉 开心值已满 +10", centerX, centerY - 50, "#ffaa66");
-                }
-                setDogState("happy");
-                dogImg.style.animation = 'dogWobble 0.4s ease-out';
-                setTimeout(() => dogImg.style.animation = '', 400);
-                combo++;
-                if(combo > maxCombo) maxCombo = combo;
-                comboValElem.innerText = combo;
-                comboValElem.classList.add("combo-highlight");
-                setTimeout(() => comboValElem.classList.remove("combo-highlight"), 200);
-                resetComboTimer();
-                addSkillEnergy(12);
-                try { eatSound.currentTime = 0; eatSound.play(); } catch(e) {}
-                for(let i = 0; i < 7; i++) createHeart(centerX, centerY, ['💚', '✨', '🍉', '❤️']);
-                updateGestureStatus("🍉 治愈投喂成功！", "ok", "西瓜可以恢复开心值，满血时转化为分数。");
-                return;
-            }
-
-            if(effect.special === "double") {
-                if(doubleTimeout) clearTimeout(doubleTimeout);
-                doubleScoreMode = true;
-                setDogState("skill");
-                flash("skill");
-                showFloatingText("🍰 双倍积分模式 5秒 🍰", centerX, centerY - 60, "#ffaa44");
-                updateGestureStatus("🍰 甜点奖励触发！", "skill", "5秒内得分翻倍，尽量保持连击。");
-                doubleTimeout = setTimeout(() => {
-                    doubleScoreMode = false;
-                    if(gameActive) setDogState("normal");
-                }, 5000);
-
-                const gain = 40;
-                score += gain;
-                scoreVal.innerText = score;
-                showFloatingText(`🍰 +${gain}`, centerX, centerY - 50, "gold");
-                combo++;
-                if(combo > maxCombo) maxCombo = combo;
-                comboValElem.innerText = combo;
-                comboValElem.classList.add("combo-highlight");
-                setTimeout(() => comboValElem.classList.remove("combo-highlight"), 200);
-                resetComboTimer();
-                addSkillEnergy(16);
-                dogImg.style.animation = 'dogWobble 0.5s ease-out';
-                setTimeout(() => dogImg.style.animation = '', 500);
-                try { eatSound.currentTime = 0; eatSound.play(); } catch(e) {}
-                for(let i = 0; i < 9; i++) createHeart(centerX, centerY, ['✨', '⭐', '🍰', '💛']);
-                return;
-            }
-
-            const basePoints = effect.score || 10;
-            let multiplier = 1;
-            if(combo >= 10) multiplier = 3;
-            else if(combo >= 5) multiplier = 2;
-            let finalGain = basePoints * multiplier;
-            if(doubleScoreMode) finalGain *= 2;
-
-            score += finalGain;
-            scoreVal.innerText = score;
-            let plusText = `+${finalGain}`;
-            if(multiplier > 1) plusText = `+${finalGain}  连击x${multiplier}!`;
-            if(doubleScoreMode && multiplier === 1) plusText = `+${finalGain} ✨双倍✨`;
-            showFloatingText(plusText, centerX, centerY - 45, "#ff884d");
-
-            combo++;
-            if(combo > maxCombo) maxCombo = combo;
-            comboValElem.innerText = combo;
-            comboValElem.classList.add("combo-highlight");
-            setTimeout(() => comboValElem.classList.remove("combo-highlight"), 200);
-            resetComboTimer();
-            addSkillEnergy(10 + Math.min(10, Math.floor(combo / 4)));
-            setDogState("happy");
-            dogImg.style.animation = 'dogWobble 0.4s ease-out';
-            setTimeout(() => dogImg.style.animation = '', 400);
-            try { eatSound.currentTime = 0; eatSound.play(); } catch(e) {}
-            for(let i = 0; i < 5 + Math.floor(combo / 3); i++) createHeart(centerX, centerY);
-            statusTag.innerText = `🍮 美味 ${emoji} 连吃x${combo} 🍮`;
-            updateGestureStatus(combo >= 5 ? `🔥 连吃 ${combo}！` : "😋 投喂成功！", combo >= 5 ? "skill" : "ok", "连续命中可提升倍率，3秒未命中会中断。");
-        }
-
-        // ---------- 游戏循环与食物生成 ----------
-        let activeFoods = [];
-        let flyingFoods = [];
-        const foodPool = ['🍮', '🍪', '🍩', '🍓', '🍔', '🍟', '🍕', '🍣', '🍰', '🍉', '🥞', '🌶️', '💣'];
-
-        function appendSushiFood(startX, topY) {
-            const emoji = foodPool[Math.floor(Math.random() * foodPool.length)];
-            const el = document.createElement('div');
-            el.className = 'scrolling-food';
-            if (emoji === '🌶️' || emoji === '💣') el.classList.add('bad-food');
-            else if (emoji === '🍮' || emoji === '🍰' || emoji === '🍉') el.classList.add('good-food');
-            el.innerText = emoji;
-            el.style.left = `${startX}px`;
-            el.style.top = `${topY}px`;
-            const speed = currentConfigSpeed + (topY === 10 ? 0.6 : 0);
-            beltTrack.appendChild(el);
-            activeFoods.push({ element: el, emoji: emoji, x: startX, topY: topY, speed: speed });
-        }
-
-        function resetGameEnvironment() {
-            while(beltTrack.firstChild) beltTrack.removeChild(beltTrack.firstChild);
-            activeFoods = [];
-            flyingFoods.forEach(f => f.element.remove());
-            flyingFoods = [];
-            score = 0;
-            combo = 0;
-            maxCombo = 0;
-            skillEnergy = 0;
-            skillReady = false;
-            doubleScoreMode = false;
-            totalHits = 0;
-            totalThrows = 0;
-            totalMisses = 0;
-            totalBadHits = 0;
-            completedOrders = 0;
-            elapsedSeconds = 0;
-            if(doubleTimeout) clearTimeout(doubleTimeout);
-            if(comboTimer) clearTimeout(comboTimer);
-            scoreVal.innerText = "0";
-            comboValElem.innerText = "0";
-            skillValElem.innerText = "0%";
-            skillCard.classList.remove("skill-ready");
-            lives = 3;
-            document.getElementById('life-card').style.display = timeLeft === 9999 ? "none" : "block";
-            if(timeLeft !== 9999) lifeVal.innerText = "❤️❤️❤️";
-            dogDirection = 1;
-            dogX = window.innerWidth / 2;
-            dogContainer.style.left = `${dogX}px`;
-            hideForceBar();
-            setDogState("normal");
-            pickNewOrder(true);
-            updateGestureStatus("👋 把手放进摄像头画面", "warn", "先看点单目标，命中指定食物有额外奖励。");
-            updateSliders();
-            for(let i = 0; i < 12; i++) {
-                appendSushiFood(window.innerWidth - (i * currentConfigSpacing), i % 2 === 0 ? 10 : 45);
-            }
-        }
-
-        function updateSliders() {
-            baseConfigSpeed = parseFloat(document.getElementById('speed-slider').value);
-            baseConfigSpacing = parseInt(document.getElementById('spacing-slider').value);
-            document.getElementById('speed-val-display').innerText = baseConfigSpeed.toFixed(1);
-            document.getElementById('spacing-val-display').innerText = baseConfigSpacing + 'px';
-            applyDynamicDifficulty();
-        }
-
-        function updateDogSpeed() {
-            dogSpeed = parseFloat(document.getElementById('dog-speed-slider').value);
-            document.getElementById('dog-speed-display').innerText = dogSpeed.toFixed(1);
-        }
-
-        function applyDynamicDifficulty() {
-            let boost = 0;
-            let spacingReduce = 0;
-            let label = "🍮 新手投喂时间";
-
-            if (timeLeft === 9999) {
-                label = "♾️ 无限练习模式";
-            } else {
-                const total = modeSelected || 180;
-                const progress = elapsedSeconds / Math.max(1, total);
-                if (progress > 0.65) { boost = 1.4; spacingReduce = 26; label = "🔥 高速投喂阶段"; }
-                else if (progress > 0.35) { boost = 0.8; spacingReduce = 14; label = "🍣 正式挑战阶段"; }
-                if (timeLeft <= 15 && gameActive) { boost = 2.2; spacingReduce = 42; label = "⏰ Final Time！"; }
-            }
-
-            currentConfigSpeed = baseConfigSpeed + boost;
-            currentConfigSpacing = Math.max(110, baseConfigSpacing - spacingReduce);
-            difficultyTag.innerText = label;
-            activeFoods.forEach(f => { f.speed = currentConfigSpeed + (f.topY === 10 ? 0.6 : 0); });
-        }
-
-        function selectTime(seconds, btn) {
-            modeSelected = seconds;
-            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            timeVal.innerText = seconds === 9999 ? "∞" : seconds;
-            document.getElementById('life-card').style.display = seconds === 9999 ? "none" : "block";
-        }
-
-        function startGameNow() {
-            timeLeft = modeSelected;
-            timeVal.innerText = timeLeft === 9999 ? "∞" : timeLeft;
-            timeCard.classList.remove("danger-countdown");
-            resultModal.style.display = 'none';
-            gameActive = true;
-            resetGameEnvironment();
-            startMenu.style.opacity = '0';
-            setTimeout(() => startMenu.style.display = 'none', 500);
-            document.getElementById('game-ui').style.visibility = 'visible';
-            document.getElementById('control-panel').style.visibility = 'visible';
-            document.getElementById('camera-wrapper').style.visibility = 'visible';
-            gestureHud.style.visibility = 'visible';
-            difficultyTag.style.visibility = 'visible';
-            document.getElementById('conveyor-belt').style.visibility = 'visible';
-            dogContainer.style.visibility = 'visible';
-            document.getElementById('pointer-0').style.display = 'block';
-            document.getElementById('pointer-1').style.display = 'block';
-            startTimerClock();
-            if (!mediaPipeStarted) startMediaPipeCamera();
-        }
-
-        function startTimerClock() {
-            if (gameClockInterval) clearInterval(gameClockInterval);
-            gameClockInterval = setInterval(() => {
-                if (!gameActive) return;
-                elapsedSeconds++;
-                if (timeLeft !== 9999) {
-                    timeLeft--;
-                    timeVal.innerText = timeLeft;
-                    if (timeLeft <= 15) timeCard.classList.add("danger-countdown");
-                    if (timeLeft === 15) {
-                        flash("bad");
-                        showFloatingText("⏰ 最后15秒！", window.innerWidth / 2, 150, "#ff4444");
-                    }
-                    if (timeLeft <= 0) {
-                        finishGame("time");
-                        return;
-                    }
-                }
-                applyDynamicDifficulty();
-            }, 1000);
-        }
-
-        function getRank() {
-            if(score >= 6500) return {rank: "SSS级 传说布丁大胃王", comment: "太强了！布丁狗已经把你当成专属投喂师。"};
-            if(score >= 4200) return {rank: "S级 黄金布丁饲养员", comment: "连击和节奏都很稳，已经很有体感游戏高手感。"};
-            if(score >= 2500) return {rank: "A级 布丁狗好朋友", comment: "表现不错，下一局可以尝试保持更长连击。"};
-            if(score >= 1200) return {rank: "B级 合格投喂员", comment: "已经掌握玩法，多利用力度条会更准。"};
-            return {rank: "C级 新手饲养员", comment: "先在无限模式里练习抓取和发射节奏。"};
-        }
-
-        function finishGame(reason = "time") {
-            if (!gameActive) return;
-            gameActive = false;
-            if (gameClockInterval) clearInterval(gameClockInterval);
-            hideForceBar();
-            document.getElementById('pointer-0').style.display = 'none';
-            document.getElementById('pointer-1').style.display = 'none';
-            document.getElementById('aiming-food-0').style.display = 'none';
-            document.getElementById('aiming-food-1').style.display = 'none';
-            document.getElementById('aim-line-0').style.display = 'none';
-            document.getElementById('aim-line-1').style.display = 'none';
-            timeCard.classList.remove("danger-countdown");
-
-            if (reason === "fail") {
-                setDogState("dead", true);
-                flash("bad");
-                screenShake();
-            } else {
-                setDogState("happy", true);
-                flash("good");
-            }
-
-            const rank = getRank();
-            document.getElementById('result-title').innerText = reason === "fail" ? "💀 开心值用完啦" : "🎉 挑战结束";
-            document.getElementById('result-rank').innerText = rank.rank;
-            document.getElementById('result-score').innerText = score;
-            document.getElementById('result-combo').innerText = maxCombo;
-            document.getElementById('result-hits').innerText = totalHits;
-            document.getElementById('result-miss').innerText = totalMisses + totalBadHits;
-            document.getElementById('result-comment').innerText = rank.comment;
-            setTimeout(() => resultModal.style.display = 'flex', 380);
-        }
-
-        function restartGame() {
-            resultModal.style.display = 'none';
-            startGameNow();
-        }
-
-        function backToMenu() {
-            resultModal.style.display = 'none';
-            gameActive = false;
-            if (gameClockInterval) clearInterval(gameClockInterval);
-            hideForceBar();
-            startMenu.style.display = 'flex';
-            setTimeout(() => startMenu.style.opacity = '1', 20);
-            document.getElementById('game-ui').style.visibility = 'hidden';
-            document.getElementById('control-panel').style.visibility = 'hidden';
-            document.getElementById('camera-wrapper').style.visibility = 'hidden';
-            gestureHud.style.visibility = 'hidden';
-            difficultyTag.style.visibility = 'hidden';
-            document.getElementById('conveyor-belt').style.visibility = 'hidden';
-            dogContainer.style.visibility = 'hidden';
-            document.getElementById('pointer-0').style.display = 'none';
-            document.getElementById('pointer-1').style.display = 'none';
-            timeCard.classList.remove("danger-countdown");
-        }
-
-        function updateGameFrame() {
-            if (!gameActive) {
-                requestAnimationFrame(updateGameFrame);
-                return;
-            }
-
-            for (let i = activeFoods.length - 1; i >= 0; i--) {
-                const food = activeFoods[i];
-                food.x -= food.speed;
-                food.element.style.left = `${food.x}px`;
-                if (food.x < -100) {
-                    food.element.remove();
-                    let maxX = window.innerWidth;
-                    activeFoods.forEach(f => { if(f.x > maxX) maxX = f.x; });
-                    activeFoods.splice(i, 1);
-                    appendSushiFood(maxX + currentConfigSpacing, Math.random() > 0.5 ? 10 : 45);
-                }
-            }
-
-            dogX += dogSpeed * dogDirection;
-            const limit = 160;
-            if (dogX > window.innerWidth - limit) { dogDirection = -1; dogX = window.innerWidth - limit; }
-            if (dogX < limit) { dogDirection = 1; dogX = limit; }
-            dogContainer.style.left = `${dogX}px`;
-
-            for(let i = flyingFoods.length - 1; i >= 0; i--) {
-                const f = flyingFoods[i];
-                f.x += f.vx;
-                f.y += f.vy;
-                f.vy += 0.35;
-                f.element.style.left = `${f.x}px`;
-                f.element.style.top = `${f.y}px`;
-
-                const dogRect = dogImg.getBoundingClientRect();
-                if (f.x > dogRect.left && f.x < dogRect.right && f.y > dogRect.top && f.y < dogRect.bottom) {
-                    handleFoodImpact(f.emoji);
-                    f.element.remove();
-                    flyingFoods.splice(i, 1);
-                    continue;
-                }
-
-                if(f.y > window.innerHeight + 80 || f.x < -100 || f.x > window.innerWidth + 100) {
-                    totalMisses++;
-                    f.element.remove();
-                    flyingFoods.splice(i, 1);
-                    if (combo > 0) {
-                        combo = 0;
-                        comboValElem.innerText = "0";
-                        showFloatingText("没接住，连击中断", dogX, window.innerHeight - 170, "#aaa");
-                    }
-                }
-            }
-            requestAnimationFrame(updateGameFrame);
-        }
-        requestAnimationFrame(updateGameFrame);
-
-        // ---------- MediaPipe 双手识别：V4 稳定版 ----------
-        // 设计目标：防止“识别一抖就自动扔出去”。
-        // 发射必须同时满足：稳定握拳抓取 + 拉开到最低力度 + 稳定张手释放。
-        let handStates = [
-            { isHolding: false, startX: 0, startY: 0, curX: 0, curY: 0, food: '', lostFrames: 0, fistFrames: 0, openFrames: 0, holdFrames: 0, pullDistance: 0, releaseArmed: false, lastGesture: 'unknown' },
-            { isHolding: false, startX: 0, startY: 0, curX: 0, curY: 0, food: '', lostFrames: 0, fistFrames: 0, openFrames: 0, holdFrames: 0, pullDistance: 0, releaseArmed: false, lastGesture: 'unknown' }
-        ];
-
-        const maxLostFrames = 18;
-        const GRAB_STABLE_FRAMES = 4;       // 连续约 4 帧握拳才抓取
-        const RELEASE_STABLE_FRAMES = 5;    // 连续约 5 帧张手才释放
-        const MIN_HOLD_FRAMES = 6;          // 抓住后至少等待几帧，避免刚抓到就误放
-        const MIN_PULL_DISTANCE = 70;       // 拉开到这个距离后才允许发射
-        const MIN_THROW_POWER = 2.0;         // 最低发射速度
-
-        function startMediaPipeCamera() {
-            mediaPipeStarted = true;
-            const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-            hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.68, minTrackingConfidence: 0.72 });
-            hands.onResults(onResults);
-            const camera = new Camera(video, {
-                onFrame: async () => { await hands.send({image: video}); },
-                width: 640,
-                height: 480
-            });
-            camera.start();
-        }
-
-        function classifyHandGesture(hand) {
-            // 返回 fist / open / middle。middle 状态不触发抓取或发射，只保持当前状态。
-            // 这里比原版更保守：4 根手指都明显弯曲才算握拳，至少 3 根明显伸直才算张手。
-            let bent = 0;
-            let extended = 0;
-            const pairs = [[8,6], [12,10], [16,14], [20,18]];
-            for (const [tip, pip] of pairs) {
-                const delta = hand[tip].y - hand[pip].y;
-                if(delta > 0.022) bent++;
-                if(delta < -0.030) extended++;
-            }
-
-            // 拇指距离辅助：手掌张开时，食指尖和拇指尖通常距离更大。
-            const thumbIndexDist = Math.hypot(hand[4].x - hand[8].x, hand[4].y - hand[8].y);
-            const palmSize = Math.hypot(hand[0].x - hand[9].x, hand[0].y - hand[9].y) || 0.12;
-            const openness = thumbIndexDist / palmSize;
-
-            if(bent >= 4) return 'fist';
-            if(extended >= 3 && openness > 0.45) return 'open';
-            return 'middle';
-        }
-
-        function resetHeldVisuals(hIdx) {
-            document.getElementById(`aiming-food-${hIdx}`).style.display = 'none';
-            document.getElementById(`aiming-food-${hIdx}`).classList.remove('armed-release');
-            document.getElementById(`aim-line-${hIdx}`).style.display = 'none';
-        }
-
-        function cancelHolding(state, hIdx, message = "已取消抓取") {
-            state.isHolding = false;
-            state.food = '';
-            state.holdFrames = 0;
-            state.pullDistance = 0;
-            state.releaseArmed = false;
-            state.openFrames = 0;
-            resetHeldVisuals(hIdx);
-            hideForceBar();
-            showFloatingText(message, state.curX || state.startX, (state.curY || state.startY) - 45, "#999");
-        }
-
-        function onResults(results) {
-            if (!gameActive) return;
-            const detectedHands = results.multiHandLandmarks || [];
-            if (detectedHands.length === 0) {
-                updateGestureStatus("👋 暂未检测到手", "warn", "把手完整放入摄像头画面；抓住食物后需要拉开到安全线再张手。 ");
-                hideForceBar();
-            }
-
-            let anyHolding = false;
-            for(let hIdx = 0; hIdx < 2; hIdx++) {
-                const state = handStates[hIdx];
-                const ptrEl = document.getElementById(`pointer-${hIdx}`);
-                const aimFoodEl = document.getElementById(`aiming-food-${hIdx}`);
-                const aimLineEl = document.getElementById(`aim-line-${hIdx}`);
-                const aimPathEl = document.getElementById(`aim-path-${hIdx}`);
-
-                if(hIdx >= detectedHands.length) {
-                    if(state.isHolding) {
-                        state.lostFrames++;
-                        if(state.lostFrames >= maxLostFrames) {
-                            cancelHolding(state, hIdx, "手部丢失，已取消");
-                        }
-                    }
-                    ptrEl.style.display = 'none';
-                    continue;
-                }
-
-                state.lostFrames = 0;
-                ptrEl.style.display = 'block';
-                const hand = detectedHands[hIdx];
-                const pX = (1 - hand[9].x) * window.innerWidth;
-                const pY = hand[9].y * window.innerHeight;
-                state.curX = pX;
-                state.curY = pY;
-                ptrEl.style.left = `${pX}px`;
-                ptrEl.style.top = `${pY}px`;
-
-                const gesture = classifyHandGesture(hand);
-                if(gesture === 'fist') {
-                    state.fistFrames++;
-                    state.openFrames = 0;
-                    state.lastGesture = 'fist';
-                } else if(gesture === 'open') {
-                    state.openFrames++;
-                    state.fistFrames = 0;
-                    state.lastGesture = 'open';
-                } else {
-                    // 中间态不清零，给识别抖动留缓冲，但也不主动触发动作。
-                    state.fistFrames = Math.max(0, state.fistFrames - 1);
-                    state.openFrames = Math.max(0, state.openFrames - 1);
-                }
-
-                ptrEl.innerText = state.fistFrames >= GRAB_STABLE_FRAMES ? '✊' : '🐾';
-
-                if(!state.isHolding) {
-                    if(state.fistFrames >= GRAB_STABLE_FRAMES) {
-                        let grabbed = false;
-                        for(let i = 0; i < activeFoods.length; i++) {
-                            const food = activeFoods[i];
-                            const rect = food.element.getBoundingClientRect();
-                            const margin = 10;
-                            if(pX > rect.left - margin && pX < rect.right + margin && pY > rect.top - margin && pY < rect.bottom + margin) {
-                                state.isHolding = true;
-                                state.food = food.emoji;
-                                state.startX = pX;
-                                state.startY = pY;
-                                state.holdFrames = 0;
-                                state.pullDistance = 0;
-                                state.releaseArmed = false;
-                                state.openFrames = 0;
-                                aimFoodEl.innerText = state.food;
-                                aimFoodEl.style.left = `${pX}px`;
-                                aimFoodEl.style.top = `${pY}px`;
-                                aimFoodEl.style.display = 'block';
-                                aimFoodEl.classList.remove('armed-release');
-                                aimLineEl.style.display = 'block';
-                                food.element.remove();
-                                activeFoods.splice(i, 1);
-                                let maxX = window.innerWidth;
-                                activeFoods.forEach(f => { if(f.x > maxX) maxX = f.x; });
-                                appendSushiFood(maxX + currentConfigSpacing, Math.random() > 0.5 ? 10 : 45);
-                                showFloatingText("抓到了！", pX, pY - 58, "#ff9900");
-                                updateGestureStatus("✊ 抓到了！先别松手", "ok", "向后拉开，力度超过安全线后，再稳定张开手掌发射。 ");
-                                grabbed = true;
-                                break;
-                            }
-                        }
-                        if (!grabbed) {
-                            updateGestureStatus("✊ 握拳中：移动到食物上方", "warn", "现在只会稳定握拳后抓取，不会因为一瞬间抖动误触。 ");
-                        }
-                    } else if(detectedHands.length > 0) {
-                        updateGestureStatus("🖐️ 张开手掌识别成功", "ok", "移动到食物上方，稳定握拳约半秒抓取。 ");
-                    }
-                    continue;
-                }
-
-                // 已抓取：瞄准、蓄力、等待稳定张手释放
-                anyHolding = true;
-                state.holdFrames++;
-                aimFoodEl.style.left = `${pX}px`;
-                aimFoodEl.style.top = `${pY}px`;
-                state.pullDistance = Math.hypot(state.startX - pX, state.startY - pY);
-                const forcePercent = (state.pullDistance / 240) * 100;
-                showForceBar(forcePercent, pX, pY);
-
-                if(state.pullDistance >= MIN_PULL_DISTANCE && state.holdFrames >= MIN_HOLD_FRAMES) {
-                    state.releaseArmed = true;
-                    aimFoodEl.classList.add('armed-release');
-                } else {
-                    state.releaseArmed = false;
-                    aimFoodEl.classList.remove('armed-release');
-                }
-
-                const vxPreview = (state.startX - pX) * 0.14;
-                const vyPreview = (state.startY - pY) * 0.14;
-                let pathD = `M ${pX} ${pY}`;
-                let tx = pX, ty = pY, tvy = vyPreview;
-                for(let k = 0; k < 30; k++) {
-                    tx += vxPreview;
-                    ty += tvy;
-                    tvy += 0.35;
-                    pathD += ` L ${tx} ${ty}`;
-                }
-                aimPathEl.setAttribute('d', pathD);
-
-                if(!state.releaseArmed) {
-                    updateGestureStatus("🎯 正在蓄力：继续拉开", "warn", "还没到安全线，张手不会发射，避免误投。 ");
-                } else {
-                    updateGestureStatus("✅ 已锁定！稳定张手发射", "skill", "看到食物发光后，再张开手掌，系统才会确认发射。 ");
-                }
-
-                // 只有“已锁定 + 稳定张手”才发射。
-                if(state.openFrames >= RELEASE_STABLE_FRAMES) {
-                    if(!state.releaseArmed) {
-                        cancelHolding(state, hIdx, "未蓄力，不发射");
-                        updateGestureStatus("已取消，不会误投", "warn", "抓住后先拉开到安全线，再张手发射。 ");
-                        continue;
-                    }
-
-                    const vx = (state.startX - pX) * 0.14;
-                    const vy = (state.startY - pY) * 0.14;
-                    const power = Math.hypot(vx, vy);
-                    if(power >= MIN_THROW_POWER) {
-                        const flyEl = document.createElement('div');
-                        flyEl.className = 'flying-food';
-                        flyEl.innerText = state.food;
-                        flyEl.style.left = `${pX}px`;
-                        flyEl.style.top = `${pY}px`;
-                        document.body.appendChild(flyEl);
-                        flyingFoods.push({ element: flyEl, emoji: state.food, x: pX, y: pY, vx: vx, vy: vy });
-                        totalThrows++;
-                        showFloatingText("确认发射！", pX, pY - 45, "#7a5a40");
-                        updateGestureStatus("🚀 发射成功！", "ok", "点单食物命中有额外奖励，连续命中倍率更高。 ");
-                    } else {
-                        showFloatingText("力度太小", pX, pY - 45, "#999");
-                        updateGestureStatus("力度太小，没有发射", "warn", "拉开距离不够时不会误投。 ");
-                    }
-
-                    state.isHolding = false;
-                    state.food = '';
-                    state.holdFrames = 0;
-                    state.pullDistance = 0;
-                    state.releaseArmed = false;
-                    state.openFrames = 0;
-                    resetHeldVisuals(hIdx);
-                    hideForceBar();
-                }
-            }
-            if (!anyHolding && detectedHands.length > 0) hideForceBar();
-        }
-
-        document.addEventListener("keydown", (e) => {
-            if(e.code === "Space" && gameActive) {
-                e.preventDefault();
-                activateSkill();
-            }
-            if(e.code === "Escape" && gameActive) {
-                e.preventDefault();
-                finishGame("time");
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            dogX = Math.min(Math.max(160, dogX), window.innerWidth - 160);
-            dogContainer.style.left = `${dogX}px`;
-        });
-    </script>
+  </div>
+
+<script>
+// ---------- DOM ----------
+const $ = id => document.getElementById(id);
+const video=$('webcam'), dogImg=$('dog-img'), dogContainer=$('pompompurin-container'), beltTrack=$('belt-track');
+const statusTag=$('status-tag'), scoreVal=$('score-val'), timeVal=$('time-val'), lifeVal=$('life-val'), comboValElem=$('combo-val');
+const skillFill=$('skill-fill'), moodFill=$('mood-fill'), eatSound=$('eat-sound'), startMenu=$('start-menu');
+const mouthTarget=$('mouth-target'), camStatus=$('cam-status'), screenFx=$('screen-fx');
+
+// 让 SVG 瞄准层使用真实屏幕坐标。
+// 之前部分浏览器会把未设置 width/height/viewBox 的 SVG 当成 300×150，
+// 导致发力线和轨迹被裁掉，看起来像“没有发力线”。
+function resizeAimSvgLayers(){
+  const w = window.innerWidth, h = window.innerHeight;
+  [0,1].forEach(slot=>{
+    const svg = $('aim-line-' + slot);
+    if(!svg) return;
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.style.width = w + 'px';
+    svg.style.height = h + 'px';
+  });
+}
+
+// ---------- V11 摄像头退后台：默认只显示状态胶囊 ----------
+let cameraModeIndex = 0;
+const cameraModes = ['cam-status-only', 'cam-preview', 'cam-mini'];
+const cameraModeNames = ['状态胶囊', '调试预览', '迷你状态'];
+function applyCameraMode(){
+  const box = $('camera-wrapper');
+  if(!box) return;
+  box.classList.remove('cam-soft','cam-mini','cam-status-only','cam-preview');
+  box.classList.add(cameraModes[cameraModeIndex]);
+  const btn = box.querySelector('.cam-tool-btn');
+  if(btn) btn.innerText = cameraModeIndex===1 ? 'C 关闭' : 'C 预览';
+}
+function cycleCameraMode(e){
+  if(e) e.stopPropagation();
+  cameraModeIndex = (cameraModeIndex + 1) % cameraModes.length;
+  applyCameraMode();
+  showEvent(`识别显示：${cameraModeNames[cameraModeIndex]}`, 1000);
+}
+function updateCameraFrameState(hasHands){
+  const box = $('camera-wrapper');
+  if(!box) return;
+  box.classList.toggle('hand-detected', !!hasHands);
+  box.classList.toggle('no-hand', !hasHands);
+}
+resizeAimSvgLayers();
+
+// ---------- game state ----------
+let score=0,timeLeft=180,lives=3,modeSelected=180,gameActive=false,paused=false,startedCamera=false;
+let dogX=window.innerWidth/2,dogDirection=1,dogSpeed=3.1,currentConfigSpeed=2.6,currentConfigSpacing=185;
+let combo=0,maxCombo=0,comboTimer=null,skillEnergy=0,skillReady=false,mood=0,frenzy=false,frenzyTimeout=null,doubleScoreMode=false,doubleTimeout=null;
+let orderFood='🍮', orderStreak=0, shield=0, assistLevel=2, activeEvent=null, eventTimeout=null, nextEventAt=30;
+let difficultyLevel=1, elapsedSeconds=0, timerId=null;
+let stats={hit:0,throw:0,orders:0,perfect:0,hurt:0,shieldUsed:0,quests:0};
+
+// ---------- assets ----------
+const dogImages={normal:'dog_normal.png',happy:'dog_happy.png',angry:'dog_angry.png',skill:'dog_skill.png',dead:'dog_dead.png'};
+function setDogState(type){ if(!dogImg) return; const src=dogImages[type]||dogImages.normal; dogImg.src=src; const text={normal:'🍣 继续喂我~ 稳定握拳抓取！',happy:'😋 好吃！布丁狗开心摇尾巴~',angry:'😵 辣到/吓到啦！',skill:'✨ 黄金布丁时间！',dead:'💀 布丁狗吃撑倒下啦'}[type]||''; if(text) statusTag.innerText=text; }
+
+// ---------- food ----------
+const foodData={
+  '🍮':{score:24,kind:'sweet'},'🍪':{score:12,kind:'sweet'},'🍩':{score:16,kind:'sweet'},'🍓':{score:16,kind:'sweet'},
+  '🍔':{score:30,kind:'meal'},'🍟':{score:20,kind:'meal'},'🍕':{score:26,kind:'meal'},'🍣':{score:22,kind:'meal'},'🥞':{score:18,kind:'sweet'},
+  '🍰':{score:18,special:'double',kind:'bonus'},'🍉':{score:12,special:'heal',kind:'bonus'},'🧁':{score:20,special:'mood',kind:'bonus'},
+  '🌶️':{special:'hurt',kind:'danger'},'💣':{special:'bomb',kind:'danger'}
+};
+const safeFoods=['🍮','🍪','🍩','🍓','🍔','🍟','🍕','🍣','🥞','🍰','🍉','🧁'];
+const dangerousFoods=['🌶️','💣'];
+let activeFoods=[],flyingFoods=[];
+
+function weightedFood(){
+  let pool=[]; const dangerBoost=activeEvent==='spicy' ? 5 : 0; const safeBoost=activeEvent==='safe' ? -2 : 0;
+  for(const f of safeFoods){ let w=5; if(activeEvent==='puddingRain' && ['🍮','🍰','🧁'].includes(f)) w+=8; if(f===orderFood) w+=4; if(foodData[f].kind==='bonus') w+=1; for(let i=0;i<w;i++) pool.push(f); }
+  for(const f of dangerousFoods){ let w=Math.max(1,2+difficultyLevel+dangerBoost+safeBoost); for(let i=0;i<w;i++) pool.push(f); }
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function appendFood(startX,topY){ const emoji=weightedFood(); const el=document.createElement('div'); el.className='scrolling-food'; el.innerText=emoji; if(emoji===orderFood) el.classList.add('orderGlow'); if(foodData[emoji]?.kind==='danger') el.classList.add('danger'); if(foodData[emoji]?.kind==='bonus') el.classList.add('bonus'); el.style.left=startX+'px'; el.style.top=topY+'px'; beltTrack.appendChild(el); const sp=currentConfigSpeed+(topY===10?.55:0)+(difficultyLevel-1)*.16; activeFoods.push({element:el,emoji,x:startX,topY,speed:sp}); }
+function refreshFoodGlow(){ activeFoods.forEach(f=>{ f.element.classList.toggle('orderGlow',f.emoji===orderFood); }); }
+function nextOrder(){ orderFood=safeFoods[Math.floor(Math.random()*safeFoods.length)]; $('order-food').innerText=orderFood; $('order-desc').innerText='命中点单食物：额外 +80 与心情'; refreshFoodGlow(); }
+
+// ---------- quests ----------
+let quests=[];
+const questTemplates=[
+  {text:'成功投喂 10 次',target:10,get:()=>stats.hit,reward:180},
+  {text:'完成点单 4 次',target:4,get:()=>stats.orders,reward:240},
+  {text:'最高连吃达到 8',target:8,get:()=>maxCombo,reward:220},
+  {text:'完美力度命中 5 次',target:5,get:()=>stats.perfect,reward:260},
+  {text:'使用护盾抵挡 1 次',target:1,get:()=>stats.shieldUsed,reward:180},
+  {text:'触发黄金狂热 1 次',target:1,get:()=>stats.frenzy||0,reward:260}
+];
+function initQuests(){ quests=[...questTemplates].sort(()=>Math.random()-.5).slice(0,3).map(q=>({...q,done:false})); renderQuests(); }
+function renderQuests(){ $('quest-list').innerHTML=''; quests.forEach((q,i)=>{ const v=Math.min(q.target,q.get()); const div=document.createElement('div'); div.className='quest-item'+(q.done?' done':''); div.innerText=`${q.done?'✅':'⬜'} ${q.text}  ${v}/${q.target}`; $('quest-list').appendChild(div); }); }
+function checkQuests(){ quests.forEach(q=>{ if(!q.done && q.get()>=q.target){ q.done=true; stats.quests++; score+=q.reward; scoreVal.innerText=score; addMood(12); addSkill(18); showEvent(`📌 小目标完成：${q.text} +${q.reward}`); } }); renderQuests(); }
+
+// ---------- feedback ----------
+function showText(text,x,y,color='#ff6b6b',size=32){ const div=document.createElement('div'); div.className='floating-text'; div.innerText=text; div.style.left=x+'px'; div.style.top=y+'px'; div.style.color=color; div.style.fontSize=size+'px'; $('toast-layer').appendChild(div); setTimeout(()=>{ div.style.transform='translateY(-86px) scale(1.03)'; div.style.opacity='0'; },20); setTimeout(()=>div.remove(),900); }
+function particleBurst(x,y,count=8,arr=['❤️','✨','⭐','💖']){ for(let i=0;i<count;i++){ const p=document.createElement('div'); p.className='particle'; p.innerText=arr[Math.floor(Math.random()*arr.length)]; p.style.left=x+'px'; p.style.top=y+'px'; const a=Math.random()*Math.PI*2, d=60+Math.random()*120; p.style.setProperty('--tx',Math.cos(a)*d+'px'); p.style.setProperty('--ty',Math.sin(a)*d-50+'px'); document.body.appendChild(p); setTimeout(()=>p.remove(),950); } }
+function flash(kind='hit'){ screenFx.className=''; screenFx.classList.add(kind==='hurt'?'fx-hurt':'fx-hit'); screenFx.style.opacity='1'; setTimeout(()=>{ if(!frenzy) screenFx.style.opacity='0'; },150); }
+function shake(){ document.body.classList.add('shake'); setTimeout(()=>document.body.classList.remove('shake'),240); }
+function showEvent(text,ms=1800){ const b=$('event-banner'); b.innerText=text; b.classList.add('show'); clearTimeout(b._t); b._t=setTimeout(()=>b.classList.remove('show'),ms); }
+
+// ---------- meters ----------
+function addSkill(v){ skillEnergy=Math.min(100,skillEnergy+v); skillFill.style.width=skillEnergy+'%'; if(skillEnergy>=100&&!skillReady){ skillReady=true; showEvent('⭐ 布丁能量满！按空格发动双倍'); statusTag.innerText='⭐ 按空格发动布丁能量！'; } }
+function addMood(v){ if(frenzy) return; mood=Math.min(100,mood+v); moodFill.style.width=mood+'%'; if(mood>=100) activateFrenzy(); }
+function activateSkill(){ if(!gameActive||paused) return; if(!skillReady){ showText('技能未就绪',dogX,window.innerHeight-210,'#9b7658',24); return; } skillReady=false; skillEnergy=0; skillFill.style.width='0%'; shield=Math.max(shield,1); doubleScoreMode=true; setDogState('skill'); showEvent('⭐ 布丁能量：双倍积分 + 奶油护盾'); if(doubleTimeout) clearTimeout(doubleTimeout); doubleTimeout=setTimeout(()=>{ doubleScoreMode=false; if(gameActive&&!frenzy) setDogState('normal'); },6500); }
+function activateFrenzy(){ frenzy=true; mood=0; moodFill.style.width='0%'; stats.frenzy=(stats.frenzy||0)+1; doubleScoreMode=true; screenFx.className='fx-frenzy'; setDogState('skill'); showEvent('🔥 黄金狂热时间！得分翻倍，连吃奖励提升！',2400); if(frenzyTimeout) clearTimeout(frenzyTimeout); frenzyTimeout=setTimeout(()=>{ frenzy=false; doubleScoreMode=false; screenFx.className=''; screenFx.style.opacity='0'; if(gameActive) setDogState('normal'); },9000); }
+
+// ---------- impact ----------
+function handleImpact(emoji,perfect=false){ if(!gameActive||paused) return; const dogRect=dogImg.getBoundingClientRect(), cx=dogRect.left+dogRect.width*.5, cy=dogRect.top+dogRect.height*.42; const data=foodData[emoji]||{score:10};
+  if(data.kind==='danger'){
+    if(shield>0){ shield--; stats.shieldUsed++; showText('🛡️ 奶油护盾抵挡！',cx,cy-40,'#5cc2ff',30); particleBurst(cx,cy,9,['🛡️','✨','🧈']); addMood(3); checkQuests(); return; }
+    if(timeLeft!==9999){ lives--; stats.hurt++; lifeVal.innerText='❤️'.repeat(Math.max(0,lives))+'🖤'.repeat(3-Math.max(0,lives)); }
+    combo=0; comboValElem.innerText='0'; setDogState('angry'); dogImg.style.animation='dogShock .55s ease'; setTimeout(()=>dogImg.style.animation='',560); flash('hurt'); shake(); showText(emoji==='💣'?'💥 炸弹 -1 开心':'🌶️ 好辣 -1 开心',cx,cy-45,'#ff3333',30); if(lives<=0&&timeLeft!==9999) finishGame('dead'); return;
+  }
+  stats.hit++; combo++; maxCombo=Math.max(maxCombo,combo); comboValElem.innerText=combo; resetComboTimer();
+  let gain=data.score||10; if(combo>=15) gain*=4; else if(combo>=10) gain*=3; else if(combo>=5) gain*=2; if(doubleScoreMode||frenzy) gain*=2; if(perfect){ gain+=45; stats.perfect++; }
+  let orderBonus=false; if(emoji===orderFood){ orderBonus=true; orderStreak++; stats.orders++; gain+=80+orderStreak*10; addMood(20); addSkill(20); shield=Math.max(shield,1); nextOrder(); } else { addMood(perfect?10:6); addSkill(perfect?14:9); }
+  if(data.special==='heal'){ if(timeLeft!==9999&&lives<3) lives++; lifeVal.innerText='❤️'.repeat(lives)+'🖤'.repeat(3-lives); gain+=20; }
+  if(data.special==='double'){ doubleScoreMode=true; if(doubleTimeout) clearTimeout(doubleTimeout); doubleTimeout=setTimeout(()=>{doubleScoreMode=false;if(!frenzy&&gameActive)setDogState('normal')},5000); }
+  if(data.special==='mood') addMood(18);
+  score+=gain; scoreVal.innerText=score; setDogState(orderBonus?'skill':'happy'); dogImg.style.animation='dogWobble .42s ease'; setTimeout(()=>dogImg.style.animation='',430); flash('hit'); try{eatSound.currentTime=0; eatSound.play()}catch(e){} particleBurst(cx,cy,perfect?14:9,orderBonus?['🍮','⭐','✨','💖']:['❤️','✨','⭐','💖']); showText(`${orderBonus?'点单完成！ ':''}+${gain}${perfect?' 完美!':''}`,cx,cy-55,orderBonus?'#ff9900':'#ff6b6b',32); $('order-streak').innerText='连续点单：'+orderStreak; checkQuests(); }
+function resetComboTimer(){ if(comboTimer) clearTimeout(comboTimer); comboTimer=setTimeout(()=>{ if(combo>0&&gameActive){ combo=0; comboValElem.innerText='0'; showText('连吃中断',dogX,window.innerHeight-190,'#999',24); } },3400); }
+
+// ---------- gesture FSM ----------
+const GRAB_STABLE_FRAMES=2, RELEASE_STABLE_FRAMES=2, MIN_HOLD_FRAMES=2, MIN_PULL_DISTANCE=42, MIN_THROW_POWER=0.45, CANCEL_OPEN_FRAMES=12, POST_THROW_COOLDOWN=6;
+let handStates=[createHandState(0),createHandState(1)];
+function createHandState(i){return{slot:i,isHolding:false,candidateFood:null,fistFrames:0,openFrames:0,holdFrames:0,lostFrames:0,cooldown:0,startX:0,startY:0,curX:0,curY:0,food:'',perfect:false,lastX:null,lastY:null};}
+function handGesture(hand){ let bent=0, open=0; const tips=[8,12,16,20], pips=[6,10,14,18]; for(let i=0;i<4;i++){ if(hand[tips[i]].y>hand[pips[i]].y+.012) bent++; if(hand[tips[i]].y<hand[pips[i]].y-.018) open++; } return {fist:bent>=3, open:open>=2, bent, openCount:open}; }
+function handPoint(hand){ return {x:(1-hand[9].x)*window.innerWidth, y:hand[9].y*window.innerHeight}; }
+function assignHands(results){ const hands=results.multiHandLandmarks||[]; const entries=hands.map((h,idx)=>({hand:h,point:handPoint(h),idx})); const assigned=[null,null]; if(entries.length===1){ const e=entries[0]; const d0=handStates[0].lastX==null?9999:Math.abs(e.point.x-handStates[0].lastX); const d1=handStates[1].lastX==null?9999:Math.abs(e.point.x-handStates[1].lastX); let slot=d0<=d1?0:1; if(d0===9999&&d1===9999) slot=e.point.x<window.innerWidth/2?0:1; assigned[slot]=e; } else if(entries.length>=2){ entries.sort((a,b)=>a.point.x-b.point.x); assigned[0]=entries[0]; assigned[1]=entries[entries.length-1]; } return assigned; }
+function foodAt(x,y){ for(let i=0;i<activeFoods.length;i++){ const f=activeFoods[i], r=f.element.getBoundingClientRect(); if(x>r.left-48&&x<r.right+48&&y>r.top-48&&y<r.bottom+48) return {food:f,index:i}; } return null; }
+function grabFood(slot,hit){ const state=handStates[slot]; const f=hit.food; state.isHolding=true; state.food=f.emoji; state.startX=state.curX; state.startY=state.curY; state.holdFrames=0; state.openFrames=0; state.fistFrames=GRAB_STABLE_FRAMES; const node=$('aiming-food-'+slot); node.innerText=state.food; node.style.left=state.curX+'px'; node.style.top=state.curY+'px'; node.style.display='block'; resizeAimSvgLayers(); const aimSvg=$('aim-line-'+slot); aimSvg.style.display='block'; $('aim-label-'+slot).style.display='block'; ['safe-circle-','anchor-dot-'].forEach(prefix=>{ $(prefix+slot).setAttribute('cx',state.startX); $(prefix+slot).setAttribute('cy',state.startY); }); $('force-line-'+slot).setAttribute('x1',state.startX); $('force-line-'+slot).setAttribute('y1',state.startY); $('force-line-'+slot).setAttribute('x2',state.startX); $('force-line-'+slot).setAttribute('y2',state.startY); f.element.remove(); activeFoods.splice(hit.index,1); let maxX=window.innerWidth; activeFoods.forEach(a=>{if(a.x>maxX)maxX=a.x}); appendFood(maxX+currentConfigSpacing,Math.random()>.5?10:50); showText('抓到了！向后拉出发力线',state.curX,state.curY-40,'#ff9900',24); }
+function cancelHold(slot,msg='已取消'){ const s=handStates[slot]; s.isHolding=false; s.food=''; s.openFrames=0; s.fistFrames=0; s.cooldown=POST_THROW_COOLDOWN; $('aiming-food-'+slot).style.display='none'; $('aiming-food-'+slot).classList.remove('armed'); $('aim-line-'+slot).style.display='none'; $('aim-label-'+slot).style.display='none'; showText(msg,s.curX||window.innerWidth/2,s.curY||200,'#aaa',22); }
+function updateAim(slot){ const s=handStates[slot], node=$('aiming-food-'+slot), path=$('aim-path-'+slot), force=$('force-line-'+slot), land=$('landing-dot-'+slot), label=$('aim-label-'+slot); node.style.left=s.curX+'px'; node.style.top=s.curY+'px'; const dx=s.startX-s.curX, dy=s.startY-s.curY, pull=Math.hypot(dx,dy); const vx=dx*.14, vy=dy*.14; force.setAttribute('x1',s.startX); force.setAttribute('y1',s.startY); force.setAttribute('x2',s.curX); force.setAttribute('y2',s.curY); force.classList.toggle('armed',pull>=MIN_PULL_DISTANCE); let d=`M ${s.curX} ${s.curY}`, tx=s.curX, ty=s.curY, tvy=vy, closest=9999, finalX=s.curX, finalY=s.curY; const dogRect=dogImg.getBoundingClientRect(), mx=dogRect.left+dogRect.width*.5, my=dogRect.top+dogRect.height*.42; for(let k=0;k<46;k++){ tx+=vx; ty+=tvy; tvy+=.35; d+=` L ${tx} ${ty}`; const dist=Math.hypot(tx-mx,ty-my); if(dist<closest) closest=dist; finalX=tx; finalY=ty; } path.setAttribute('d',d); const likelyHit=closest<160+(assistLevel*55); s.likelyHit=likelyHit; path.classList.toggle('hit',likelyHit); land.classList.toggle('hit',likelyHit); land.setAttribute('cx',finalX); land.setAttribute('cy',finalY); s.perfect=pull>=58&&pull<=172; node.classList.toggle('armed',pull>=MIN_PULL_DISTANCE); mouthTarget.classList.toggle('show',true); label.style.display='block'; label.style.left=s.curX+'px'; label.style.top=(s.curY-54)+'px'; if(pull<MIN_PULL_DISTANCE) label.innerText='轻轻拉开'; else if(s.perfect&&likelyHit) label.innerText='🎯 张手就投喂'; else if(likelyHit) label.innerText='✅ 可以张手'; else if(s.perfect) label.innerText='力度舒服'; else label.innerText='往狗狗方向拉'; updateHandHud(slot,s,pull); }
+function releaseFood(slot){ const s=handStates[slot]; const dx=s.startX-s.curX, dy=s.startY-s.curY, pull=Math.hypot(dx,dy); let vx=dx*.14, vy=dy*.14; if(pull<MIN_PULL_DISTANCE||Math.hypot(vx,vy)<MIN_THROW_POWER){ cancelHold(slot,'力度太小，取消'); return; } const dogRect=dogImg.getBoundingClientRect(), mx=dogRect.left+dogRect.width*.5, my=dogRect.top+dogRect.height*.42; const frames=28; const predX=s.curX+vx*frames; const predY=s.curY+vy*frames+.35*frames*(frames-1)/2; const curveAssist=[0,.34,.52][assistLevel]||0; if(curveAssist>0){ vx+=(mx-predX)/frames*curveAssist; vy+=(my-predY)/frames*curveAssist; } const fly=document.createElement('div'); fly.className='flying-food'; fly.innerText=s.food; fly.style.left=s.curX+'px'; fly.style.top=s.curY+'px'; document.body.appendChild(fly); flyingFoods.push({element:fly,emoji:s.food,x:s.curX,y:s.curY,vx,vy,perfect:s.perfect}); stats.throw++; $('aiming-food-'+slot).style.display='none'; $('aiming-food-'+slot).classList.remove('armed'); $('aim-line-'+slot).style.display='none'; $('aim-label-'+slot).style.display='none'; s.isHolding=false; s.food=''; s.cooldown=POST_THROW_COOLDOWN; s.openFrames=0; s.fistFrames=0; showText(s.perfect?'完美投喂！':'投喂！',s.curX,s.curY-45,s.perfect?'#ffaa00':'#5cc2ff',26); }
+function updateHandHud(slot,s,pull=0,gesture=null){ const name=$('h'+slot+'-state'), icon=$('h'+slot+'-icon'), fill=$('h'+slot+'-power'), dots=$('h'+slot+'-dots'); const pct=Math.min(100,(pull/210)*100); fill.style.width=pct+'%'; let text='等待识别', ic='🐾'; if(s.cooldown>0){text='冷却中，稍等一下';ic='⏳'} else if(s.isHolding){ if(pull<MIN_PULL_DISTANCE){text='抓住了，轻轻向后拉';ic='✊'} else if(s.perfect){text='很好！张手即可投喂';ic='🎯'} else {text='可以投喂，张开手';ic='🖐️'} } else if(gesture?.fist){text='检测到握拳，移到食物上';ic='✊'} else if(gesture?.open){text='张手中，准备抓取食物';ic='🖐️'} name.innerText=text; icon.innerText=ic; const frames=s.isHolding?s.openFrames:s.fistFrames; dots.innerHTML=Array.from({length:5},(_,i)=>`<span class="${i<Math.min(5,frames)?'on':''}">●</span>`).join(' '); }
+function onResults(results){ if(!gameActive||paused) return; const assigned=assignHands(results); const hasHands = assigned.some(Boolean); camStatus.innerText = hasHands ? '手势 OK' : '请把手放入画面'; updateCameraFrameState(hasHands); for(let slot=0;slot<2;slot++){ const s=handStates[slot], ptr=$('pointer-'+slot); if(s.cooldown>0) s.cooldown--; const e=assigned[slot]; if(!e){ s.lostFrames++; ptr.style.display='none'; if(s.isHolding&&s.lostFrames>16) cancelHold(slot,'手离开画面，取消'); updateHandHud(slot,s); continue; } s.lostFrames=0; const {x,y}=e.point; s.curX=x; s.curY=y; s.lastX=x; s.lastY=y; const g=handGesture(e.hand); ptr.style.display='block'; ptr.style.left=x+'px'; ptr.style.top=y+'px'; ptr.innerText=s.isHolding?'✊':(g.fist?'✊':'🐾'); ptr.classList.toggle('cool',s.cooldown>0); ptr.classList.toggle('ready',s.isHolding&&Math.hypot(s.startX-s.curX,s.startY-s.curY)>=MIN_PULL_DISTANCE);
+    if(s.cooldown>0){ updateHandHud(slot,s,0,g); continue; }
+    if(!s.isHolding){ if(g.fist){ s.fistFrames++; s.openFrames=0; const hit=foodAt(x,y); if(hit&&s.fistFrames>=GRAB_STABLE_FRAMES) grabFood(slot,hit); } else { s.fistFrames=0; } updateHandHud(slot,s,0,g); }
+    else { s.holdFrames++; const pull=Math.hypot(s.startX-x,s.startY-y); updateAim(slot); if(g.open){ s.openFrames++; s.fistFrames=0; if(pull<MIN_PULL_DISTANCE && s.openFrames>=CANCEL_OPEN_FRAMES) cancelHold(slot,'未达到安全线，取消'); else if(s.openFrames>=RELEASE_STABLE_FRAMES && s.holdFrames>=MIN_HOLD_FRAMES) releaseFood(slot); } else if(g.fist){ s.openFrames=0; s.fistFrames++; } else { s.openFrames=Math.max(0,s.openFrames-1); } }
+  } }
+
+// ---------- loop ----------
+function updateGameFrame(){ if(gameActive&&!paused){
+  for(let i=activeFoods.length-1;i>=0;i--){ const f=activeFoods[i]; let mul=activeEvent==='slow'?0.55:1; f.x-=f.speed*mul; f.element.style.left=f.x+'px'; if(f.x<-110){ f.element.remove(); let maxX=window.innerWidth; activeFoods.forEach(a=>{if(a.x>maxX)maxX=a.x}); activeFoods.splice(i,1); appendFood(maxX+currentConfigSpacing,Math.random()>.5?10:50); } }
+  const aimingNow=handStates.some(s=>s.isHolding); dogX+=dogSpeed*dogDirection*(aimingNow?0.18:1); const lim=160; if(dogX>window.innerWidth-lim){dogX=window.innerWidth-lim;dogDirection=-1} if(dogX<lim){dogX=lim;dogDirection=1} dogContainer.style.left=dogX+'px';
+  const dogRect=dogImg.getBoundingClientRect(); const tx=dogRect.left+dogRect.width*.5, ty=dogRect.top+dogRect.height*.42; const assist=[0,.055,.105][assistLevel]||0;
+  for(let i=flyingFoods.length-1;i>=0;i--){ const f=flyingFoods[i]; const dx=tx-f.x, dy=ty-f.y, dist=Math.hypot(dx,dy); if(assist>0&&dist<260){ f.vx+=dx*assist*.035; f.vy+=dy*assist*.035; }
+    f.x+=f.vx; f.y+=f.vy; f.vy+=.35; f.element.style.left=f.x+'px'; f.element.style.top=f.y+'px'; if(f.x>dogRect.left+35&&f.x<dogRect.right-35&&f.y>dogRect.top+20&&f.y<dogRect.bottom-20){ handleImpact(f.emoji,f.perfect); f.element.remove(); flyingFoods.splice(i,1); continue; } if(f.y>window.innerHeight+100||f.x<-150||f.x>window.innerWidth+150){ f.element.remove(); flyingFoods.splice(i,1); } }
+  if(!handStates.some(s=>s.isHolding)) mouthTarget.classList.remove('show'); }
+  requestAnimationFrame(updateGameFrame);
+}
+requestAnimationFrame(updateGameFrame);
+
+// ---------- timer / events ----------
+const eventList=[
+  {id:'puddingRain',name:'🍮 布丁雨：甜品出现率提升'}, {id:'slow',name:'🧈 奶油慢动作：传送带变慢'}, {id:'safe',name:'🛡️ 安全点心：危险食物减少'}, {id:'spicy',name:'🌶️ 辣味突袭：危险食物变多，送一次护盾'}, {id:'combo',name:'⚡ 连吃派对：连击更容易爆分'}
+];
+function startRandomEvent(){ if(activeEvent) return; const ev=eventList[Math.floor(Math.random()*eventList.length)]; activeEvent=ev.id; if(ev.id==='spicy') shield=Math.max(shield,1); showEvent(ev.name,2500); eventTimeout=setTimeout(()=>{ activeEvent=null; showEvent('事件结束，继续投喂！',1200); },13000); }
+function startTimer(){ clearInterval(timerId); elapsedSeconds=0; nextEventAt=26; timerId=setInterval(()=>{ if(!gameActive||paused) return; elapsedSeconds++; if(timeLeft!==9999){ timeLeft--; timeVal.innerText=timeLeft; if(timeLeft<=0){ finishGame('time'); return; } }
+  if(elapsedSeconds%28===0){ difficultyLevel++; showEvent(`难度提升 Lv.${difficultyLevel}`); }
+  if(elapsedSeconds>=nextEventAt){ startRandomEvent(); nextEventAt+=34+Math.floor(Math.random()*12); }
+},1000); }
+
+// ---------- game control ----------
+
+function toggleSettingsPanel(){
+  const panel=$('control-panel');
+  panel.classList.toggle('open');
+}
+
+function selectTime(seconds,btn){ modeSelected=seconds; document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function selectAssist(level,btn){ assistLevel=level; document.querySelectorAll('.assist-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); $('assist-slider').value=level; updateAssistText(); }
+function setAssistFromSlider(){ assistLevel=parseInt($('assist-slider').value); updateAssistText(); }
+function updateAssistText(){ $('assist-display').innerText=['关闭','推荐','强辅助'][assistLevel]; }
+function updateSliders(){ currentConfigSpeed=parseFloat($('speed-slider').value); currentConfigSpacing=parseInt($('spacing-slider').value); $('speed-val-display').innerText=currentConfigSpeed.toFixed(1); $('spacing-val-display').innerText=currentConfigSpacing+'px'; activeFoods.forEach(f=>f.speed=currentConfigSpeed+(f.topY===10?.55:0)+(difficultyLevel-1)*.16); }
+function updateDogSpeed(){ dogSpeed=parseFloat($('dog-speed-slider').value); $('dog-speed-display').innerText=dogSpeed.toFixed(1); }
+function resetGame(){ activeFoods.forEach(f=>f.element.remove()); flyingFoods.forEach(f=>f.element.remove()); activeFoods=[]; flyingFoods=[]; handStates=[createHandState(0),createHandState(1)]; score=0; combo=0; maxCombo=0; skillEnergy=0; skillReady=false; mood=0; lives=3; orderStreak=0; shield=0; difficultyLevel=1; activeEvent=null; stats={hit:0,throw:0,orders:0,perfect:0,hurt:0,shieldUsed:0,quests:0}; if(frenzyTimeout)clearTimeout(frenzyTimeout); if(doubleTimeout)clearTimeout(doubleTimeout); if(eventTimeout)clearTimeout(eventTimeout); frenzy=false; doubleScoreMode=false; scoreVal.innerText='0'; comboValElem.innerText='0'; skillFill.style.width='0%'; moodFill.style.width='0%'; timeLeft=modeSelected; timeVal.innerText=timeLeft===9999?'∞':timeLeft; $('life-card').style.display=timeLeft===9999?'none':'block'; lifeVal.innerText='❤️❤️❤️'; $('order-streak').innerText='连续点单：0'; dogX=window.innerWidth/2; dogContainer.style.left=dogX+'px'; setDogState('normal'); nextOrder(); initQuests(); for(let i=0;i<14;i++) appendFood(window.innerWidth-i*currentConfigSpacing, i%2===0?10:50); }
+function startGameNow(){ resizeAimSvgLayers(); applyCameraMode(); gameActive=true; paused=false; resetGame(); startMenu.style.opacity='0'; setTimeout(()=>startMenu.style.display='none',320); ['game-ui','camera-wrapper','conveyor-belt','pompompurin-container','gesture-hud','order-panel','settings-toggle'].forEach(id=>$(id).style.visibility='visible'); $('control-panel').classList.remove('open'); $('pointer-0').style.display='block'; $('pointer-1').style.display='block'; $('result-modal').style.display='none'; startTimer(); startMediaPipeCamera(); showEvent('V11 轻松投喂：摄像头已隐藏，抓住后狗狗会等你瞄准'); }
+function togglePause(){ if(!gameActive) return; paused=!paused; showEvent(paused?'⏸️ 已暂停':'▶️ 继续游戏',1200); }
+function finishGame(reason='time'){ if(!gameActive) return; gameActive=false; clearInterval(timerId); setDogState(reason==='dead'?'dead':'happy'); const grade=getGrade(score); $('result-grade').innerText=grade.letter; $('result-title').innerText=grade.title; $('r-score').innerText=score; $('r-combo').innerText=maxCombo; $('r-hit').innerText=stats.hit; $('r-order').innerText=stats.orders; $('result-modal').style.display='flex'; }
+function getGrade(s){ if(s>=6500) return{letter:'SSS',title:'传说级黄金布丁饲养员'}; if(s>=4200) return{letter:'SS',title:'超级布丁大胃王'}; if(s>=2600) return{letter:'S',title:'黄金布丁饲养员'}; if(s>=1500) return{letter:'A',title:'合格甜品店长'}; if(s>=700) return{letter:'B',title:'新手投喂员'}; return{letter:'C',title:'布丁狗还没吃饱'}; }
+function restartGame(){ startGameNow(); }
+function backToMenu(){ gameActive=false; clearInterval(timerId); $('result-modal').style.display='none'; startMenu.style.display='flex'; startMenu.style.opacity='1'; ['game-ui','control-panel','camera-wrapper','conveyor-belt','pompompurin-container','gesture-hud','order-panel','quest-panel','settings-toggle'].forEach(id=>$(id).style.visibility='hidden'); $('control-panel').classList.remove('open'); }
+
+// ---------- camera ----------
+function startMediaPipeCamera(){ if(startedCamera) return; startedCamera=true; try{ const hands=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`}); hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.66,minTrackingConfidence:.66}); hands.onResults(onResults); const camera=new Camera(video,{onFrame:async()=>{ if(gameActive&&!paused) await hands.send({image:video}); },width:640,height:480}); camera.start(); camStatus.innerText='正在启动识别'; }catch(err){ camStatus.innerText='摄像头启动失败'; showEvent('摄像头启动失败，请检查权限或用 HTTPS/localhost 打开',3500); console.error(err); } }
+
+document.addEventListener('keydown',e=>{ if(e.code==='Space'){e.preventDefault();activateSkill()} if(e.code==='KeyP')togglePause(); if(e.code==='KeyR'&&gameActive)restartGame(); if(e.code==='KeyC'&&gameActive)cycleCameraMode(); });
+window.addEventListener('resize',()=>{ resizeAimSvgLayers(); dogX=Math.min(Math.max(160,dogX),window.innerWidth-160); });
+</script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"7939e04a4baf43c8b86a560f74aac60e","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
